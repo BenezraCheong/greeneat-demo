@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>GreenEat AI 管理后台</title>
+<style>
+/* ===== Reset & Base ===== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#F0FDF4;
+  color:#1F2937;
+  line-height:1.6;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+select,input{font-family:inherit;font-size:14px}
+
+/* ===== App Shell ===== */
+.app{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:#F0FDF4;
+  position:relative;
+}
+
+/* ===== Top Bar ===== */
+.top-bar{
+  background:linear-gradient(135deg,#065F46,#0D9B6A);
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.top-bar .back-link{
+  color:#fff;
+  font-size:13px;
+  opacity:.85;
+  white-space:nowrap;
+}
+.top-bar .back-link:hover{opacity:1}
+.top-bar h1{
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:.5px;
+}
+
+/* ===== Tab Bar ===== */
+.tab-bar{
+  background:#fff;
+  border-bottom:1px solid #E5E7EB;
+  display:flex;
+  overflow-x:auto;
+  flex-shrink:0;
+  position:sticky;
+  top:48px;
+  z-index:99;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex-shrink:0;
+  padding:10px 16px;
+  font-size:13px;
+  color:#6B7280;
+  background:none;
+  border:none;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;
+  transition:all .2s;
+  font-weight:500;
+}
+.tab-btn.active{
+  color:#065F46;
+  border-bottom-color:#065F46;
+  font-weight:700;
+}
+.tab-btn:hover{color:#065F46}
+
+/* ===== Content ===== */
+.content{
+  flex:1;
+  padding:16px;
+  padding-bottom:32px;
+}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ===== Cards Grid ===== */
+.cards-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:20px;
+}
+.metric-card{
+  background:#fff;
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  position:relative;
+  overflow:hidden;
+}
+.metric-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:var(--bar-color,#065F46);
+}
+.metric-card .label{
+  font-size:11px;
+  color:#9CA3AF;
+  margin-bottom:4px;
+  font-weight:500;
+}
+.metric-card .value{
+  font-size:22px;
+  font-weight:800;
+  color:#111827;
+  line-height:1.2;
+}
+.metric-card .change{
+  font-size:11px;
+  margin-top:4px;
+  font-weight:600;
+}
+.metric-card .change.up{color:#10B981}
+.metric-card .change.down{color:#EF4444}
+
+/* ===== Section Title ===== */
+.section-title{
+  font-size:15px;
+  font-weight:700;
+  color:#111827;
+  margin:20px 0 12px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.section-title .dot{
+  width:6px;height:6px;
+  background:#065F46;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+/* ===== Bar Chart ===== */
+.bar-chart{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+.bar-item{
+  margin-bottom:10px;
+}
+.bar-item:last-child{margin-bottom:0}
+.bar-label{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:4px;
+  font-size:12px;
+}
+.bar-label .name{color:#374151;font-weight:600}
+.bar-label .grams{color:#6B7280;font-size:11px}
+.bar-track{
+  height:20px;
+  background:#F3F4F6;
+  border-radius:4px;
+  overflow:hidden;
+}
+.bar-fill{
+  height:100%;
+  border-radius:4px;
+  transition:width .6s ease;
+  min-width:4px;
+}
+.bar-fill.green{background:linear-gradient(90deg,#34D399,#10B981)}
+.bar-fill.yellow{background:linear-gradient(90deg,#FBBF24,#F59E0B)}
+.bar-fill.red{background:linear-gradient(90deg,#F87171,#EF4444)}
+
+/* ===== AI Form ===== */
+.form-card{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  margin-bottom:16px;
+}
+.form-group{
+  margin-bottom:16px;
+}
+.form-group:last-of-type{margin-bottom:0}
+.form-group label{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  color:#374151;
+  margin-bottom:6px;
+}
+.form-group select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #D1D5DB;
+  border-radius:8px;
+  background:#F9FAFB;
+  color:#111827;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%236B7280'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+}
+.form-group select:focus{
+  outline:none;
+  border-color:#065F46;
+  box-shadow:0 0 0 3px rgba(6,95,70,.1);
+}
+.slider-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.slider-wrap input[type=range]{
+  flex:1;
+  -webkit-appearance:none;
+  appearance:none;
+  height:6px;
+  background:#E5E7EB;
+  border-radius:3px;
+  outline:none;
+}
+.slider-wrap input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px;height:20px;
+  background:#065F46;
+  border-radius:50%;
+  cursor:pointer;
+}
+.slider-wrap .slider-val{
+  min-width:48px;
+  text-align:right;
+  font-size:13px;
+  font-weight:700;
+  color:#065F46;
+}
+
+.btn-primary{
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg,#065F46,#0D9B6A);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:700;
+  margin-top:8px;
+  transition:opacity .2s;
+}
+.btn-primary:hover{opacity:.9}
+.btn-primary:active{transform:scale(.98)}
+
+/* ===== AI Result ===== */
+.ai-result{
+  display:none;
+  margin-top:16px;
+}
+.ai-result.show{display:block}
+.result-highlight{
+  background:linear-gradient(135deg,#ECFDF5,#D1FAE5);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
+  text-align:center;
+}
+.result-highlight .big-num{
+  font-size:32px;
+  font-weight:800;
+  color:#065F46;
+  line-height:1.2;
+}
+.result-highlight .big-label{
+  font-size:12px;
+  color:#047857;
+  margin-top:2px;
+}
+.result-highlight .save-tag{
+  display:inline-block;
+  background:#065F46;
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:20px;
+  margin-top:6px;
+}
+.result-tags{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.result-tag{
+  font-size:11px;
+  padding:6px 12px;
+  border-radius:20px;
+  font-weight:600;
+}
+.result-tag.cuisine{background:#DBEAFE;color:#1D4ED8}
+.result-tag.warn{background:#FEF2F2;color:#DC2626}
+
+/* ===== Table ===== */
+.data-table{
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  margin-bottom:16px;
+}
+.data-table table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+.data-table thead{
+  background:#F9FAFB;
+}
+.data-table th{
+  padding:10px 8px;
+  text-align:left;
+  font-weight:600;
+  color:#6B7280;
+  font-size:11px;
+  border-bottom:1px solid #E5E7EB;
+}
+.data-table td{
+  padding:10px 8px;
+  border-bottom:1px solid #F3F4F6;
+  color:#374151;
+}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr.row-red td{background:#FEF2F2}
+.data-table tr.row-red .waste-val{color:#DC2626;font-weight:700}
+.data-table .tag{
+  display:inline-block;
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:4px;
+  font-weight:600;
+}
+.tag-green{background:#D1FAE5;color:#065F46}
+.tag-red{background:#FEE2E2;color:#DC2626}
+.tag-yellow{background:#FEF3C7;color:#D97706}
+.tag-blue{background:#DBEAFE;color:#1D4ED8}
+
+/* ===== Line Chart ===== */
+.line-chart{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  margin-bottom:16px;
+}
+.line-chart-label{
+  font-size:12px;
+  color:#6B7280;
+  margin-bottom:12px;
+  font-weight:600;
+}
+.line-chart-area{
+  display:flex;
+  align-items:flex-end;
+  gap:0;
+  height:120px;
+  border-bottom:2px solid #E5E7EB;
+  border-left:2px solid #E5E7EB;
+  position:relative;
+  padding-left:24px;
+}
+.y-axis{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:24px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  font-size:9px;
+  color:#9CA3AF;
+}
+.line-point-wrap{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  height:100%;
+  justify-content:flex-end;
+}
+.line-point-wrap .line-dot{
+  width:8px;height:8px;
+  background:#065F46;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 0 0 2px #065F46;
+  position:relative;
+  z-index:2;
+}
+.line-point-wrap .line-bar{
+  position:absolute;
+  bottom:0;
+  width:2px;
+  background:#D1FAE5;
+  z-index:0;
+}
+.line-point-wrap .line-val{
+  position:absolute;
+  top:-4px;
+  transform:translateY(-100%);
+  font-size:9px;
+  font-weight:700;
+  color:#065F46;
+  white-space:nowrap;
+}
+.line-point-wrap .line-day{
+  margin-top:6px;
+  font-size:10px;
+  color:#9CA3AF;
+  white-space:nowrap;
+}
+/* connecting line via overlay */
+.line-connect{
+  position:absolute;
+  top:0;left:24px;right:0;bottom:0;
+  z-index:1;
+  pointer-events:none;
+}
+
+/* ===== Purchase List ===== */
+.purchase-item{
+  background:#fff;
+  border-radius:12px;
+  padding:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.purchase-item:last-of-type{margin-bottom:16px}
+.purchase-icon{
+  width:40px;height:40px;
+  background:#ECFDF5;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+.purchase-info{flex:1;min-width:0}
+.purchase-info .p-name{
+  font-size:13px;
+  font-weight:700;
+  color:#111827;
+}
+.purchase-info .p-detail{
+  font-size:11px;
+  color:#6B7280;
+  margin-top:2px;
+}
+.purchase-info .p-detail del{color:#9CA3AF}
+.purchase-right{text-align:right;flex-shrink:0}
+.purchase-right .p-save{
+  font-size:14px;
+  font-weight:800;
+  color:#065F46;
+}
+.purchase-right .p-percent{
+  font-size:11px;
+  color:#10B981;
+  font-weight:600;
+}
+.purchase-item.confirmed{
+  border-left:4px solid #10B981;
+  background:#F0FDF4;
+}
+.purchase-item.confirmed .p-status{
+  display:inline-block;
+  font-size:10px;
+  background:#D1FAE5;
+  color:#065F46;
+  padding:2px 8px;
+  border-radius:4px;
+  font-weight:700;
+  margin-top:2px;
+}
+.btn-sap{
+  width:100%;
+  padding:14px;
+  background:#065F46;
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:700;
+  transition:all .2s;
+}
+.btn-sap:disabled{
+  background:#D1D5DB;
+  color:#9CA3AF;
+  cursor:not-allowed;
+}
+
+/* ===== Ranking ===== */
+.rank-item{
+  background:#fff;
+  border-radius:12px;
+  padding:12px 14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.rank-badge{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:800;
+  flex-shrink:0;
+  background:#F3F4F6;
+  color:#6B7280;
+}
+.rank-badge.gold{background:linear-gradient(135deg,#FDE68A,#F59E0B);color:#78350F}
+.rank-badge.silver{background:linear-gradient(135deg,#E5E7EB,#9CA3AF);color:#374151}
+.rank-badge.bronze{background:linear-gradient(135deg,#FED7AA,#D97706);color:#78350F}
+.rank-badge.bottom{background:#FEE2E2;color:#DC2626}
+.rank-info{flex:1}
+.rank-info .r-class{
+  font-size:13px;
+  font-weight:700;
+  color:#111827;
+}
+.rank-info .r-sub{
+  font-size:11px;
+  color:#6B7280;
+  margin-top:1px;
+}
+.rank-rate{
+  font-size:16px;
+  font-weight:800;
+  flex-shrink:0;
+}
+.rank-rate.high{color:#065F46}
+.rank-rate.low{color:#DC2626}
+
+/* ===== Animations ===== */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.panel.active{animation:fadeIn .25s ease}
+
+/* ===== Responsive fallback ===== */
+@media(min-width:481px){
+  body{background:#E5E7EB}
+  .app{box-shadow:0 0 40px rgba(0,0,0,.1)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <a href="index.html" class="back-link">&larr; 返回首页</a>
+  <h1>GreenEat AI</h1>
+  <span style="width:70px;text-align:right;font-size:11px;opacity:.7">管理后台</span>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="overview">数据总览</button>
+  <button class="tab-btn" data-tab="ai">AI备餐推演</button>
+  <button class="tab-btn" data-tab="dishes">菜品分析</button>
+  <button class="tab-btn" data-tab="purchase">采购管理</button>
+  <button class="tab-btn" data-tab="rank">排行榜</button>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+<!-- ===== Tab 1: 数据总览 ===== -->
+<div class="panel active" id="panel-overview">
+  <div class="cards-grid">
+    <div class="metric-card" style="--bar-color:#EF4444">
+      <div class="label">今日浪费</div>
+      <div class="value">1,286g</div>
+      <div class="change down">&darr; 12%</div>
+    </div>
+    <div class="metric-card" style="--bar-color:#10B981">
+      <div class="label">光盘率</div>
+      <div class="value">85%</div>
+      <div class="change up">&uarr; 3%</div>
+    </div>
+    <div class="metric-card" style="--bar-color:#3B82F6">
+      <div class="label">碳币激励</div>
+      <div class="value">12,450</div>
+      <div class="change up">&uarr; 8%</div>
+    </div>
+    <div class="metric-card" style="--bar-color:#F59E0B">
+      <div class="label">挽回金额</div>
+      <div class="value">&yen;3,480</div>
+      <div class="change up">&uarr; 15%</div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>菜品平均剩余量</div>
+  <div class="bar-chart" id="barChart">
+    <!-- JS 渲染 -->
+  </div>
+</div>
+
+<!-- ===== Tab 2: AI备餐推演 ===== -->
+<div class="panel" id="panel-ai">
+  <div class="form-card">
+    <div class="form-group">
+      <label>天气条件</label>
+      <select id="aiWeather">
+        <option>晴天</option><option>多云</option><option>阴天</option><option>小雨</option><option>大雨</option><option>强降雨</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>星期 / 特殊日</label>
+      <select id="aiDay">
+        <option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>考试周</option><option>活动日</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>预计用餐人数</label>
+      <div class="slider-wrap">
+        <input type="range" id="aiPeople" min="500" max="5000" step="50" value="2000">
+        <span class="slider-val" id="aiPeopleVal">2,000</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>历史剩饭率</label>
+      <div class="slider-wrap">
+        <input type="range" id="aiRate" min="5" max="40" step="1" value="18">
+        <span class="slider-val" id="aiRateVal">18%</span>
+      </div>
+    </div>
+    <button class="btn-primary" id="btnRunAI">运行推演</button>
+  </div>
+
+  <div class="ai-result" id="aiResult">
+    <div class="result-highlight">
+      <div class="big-label">推荐采购总量</div>
+      <div class="big-num" id="aiTotal">1,850 kg</div>
+      <span class="save-tag" id="aiSaveTag">节省 22%</span>
+    </div>
+    <div class="result-tags">
+      <span class="result-tag cuisine">推荐川菜为主</span>
+      <span class="result-tag cuisine">增加汤品类</span>
+      <span class="result-tag warn">红烧肉应减量30%</span>
+      <span class="result-tag warn">糖醋排骨废弃率高</span>
+    </div>
+    <div class="section-title"><span class="dot"></span>菜品调整建议</div>
+    <div class="data-table" id="aiTable">
+      <table>
+        <thead>
+          <tr><th>菜品</th><th>原量</th><th>建议量</th><th>调整</th><th>原因</th></tr>
+        </thead>
+        <tbody id="aiTableBody">
+          <!-- JS 渲染 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Tab 3: 菜品分析 ===== -->
+<div class="panel" id="panel-dishes">
+  <div class="section-title"><span class="dot"></span>浪费排行</div>
+  <div class="data-table">
+    <table>
+      <thead><tr><th>#</th><th>菜品</th><th>剩余</th><th>光盘率</th><th>建议</th></tr></thead>
+      <tbody id="dishRankBody">
+        <!-- JS 渲染 -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title"><span class="dot"></span>近7天浪费趋势</div>
+  <div class="line-chart">
+    <div class="line-chart-label">单位：千克</div>
+    <div class="line-chart-area" id="lineChartArea">
+      <!-- JS 渲染 -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== Tab 4: 采购管理 ===== -->
+<div class="panel" id="panel-purchase">
+  <div class="section-title"><span class="dot"></span>采购调整订单</div>
+  <div id="purchaseList">
+    <!-- JS 渲染 -->
+  </div>
+  <button class="btn-sap" id="btnSAP">确认并写入 SAP</button>
+</div>
+
+<!-- ===== Tab 5: 排行榜 ===== -->
+<div class="panel" id="panel-rank">
+  <div class="section-title"><span class="dot"></span>班级光盘率 Top 10</div>
+  <div id="rankList">
+    <!-- JS 渲染 -->
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+(function(){
+  /* ===== Tab Switching ===== */
+  var tabs = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.panel');
+  tabs.forEach(function(t){
+    t.addEventListener('click',function(){
+      tabs.forEach(function(b){b.classList.remove('active')});
+      panels.forEach(function(p){p.classList.remove('active')});
+      t.classList.add('active');
+      document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+      /* scroll tab into view */
+      t.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    });
+  });
+
+  /* ===== Tab1: Bar Chart ===== */
+  var dishes = [
+    {name:'番茄炒蛋',grams:85,color:'green'},
+    {name:'红烧肉',grams:320,color:'red'},
+    {name:'清炒时蔬',grams:45,color:'green'},
+    {name:'糖醋排骨',grams:280,color:'red'},
+    {name:'宫保鸡丁',grams:150,color:'yellow'},
+    {name:'麻婆豆腐',grams:95,color:'green'},
+    {name:'鱼香肉丝',grams:190,color:'yellow'},
+    {name:'紫菜蛋汤',grams:30,color:'green'},
+    {name:'炸鸡排',grams:260,color:'red'},
+    {name:'蒜蓉西兰花',grams:55,color:'green'}
+  ];
+  var maxGrams = 0;
+  dishes.forEach(function(d){if(d.grams>maxGrams)maxGrams=d.grams});
+  var chartHtml = '';
+  dishes.forEach(function(d){
+    var pct = Math.round(d.grams/maxGrams*100);
+    chartHtml += '<div class="bar-item">'
+      +'<div class="bar-label"><span class="name">'+d.name+'</span><span class="grams">'+d.grams+'g</span></div>'
+      +'<div class="bar-track"><div class="bar-fill '+d.color+'" style="width:'+pct+'%"></div></div>'
+      +'</div>';
+  });
+  document.getElementById('barChart').innerHTML = chartHtml;
+
+  /* ===== Tab2: AI Sliders ===== */
+  var sliderPeople = document.getElementById('aiPeople');
+  var sliderRate = document.getElementById('aiRate');
+  sliderPeople.addEventListener('input',function(){
+    document.getElementById('aiPeopleVal').textContent = parseInt(this.value).toLocaleString();
+  });
+  sliderRate.addEventListener('input',function(){
+    document.getElementById('aiRateVal').textContent = this.value+'%';
+  });
+
+  /* Run AI */
+  document.getElementById('btnRunAI').addEventListener('click',function(){
+    var people = parseInt(sliderPeople.value);
+    var rate = parseInt(sliderRate.value);
+    var base = people * 0.45;
+    var saved = Math.round(base * (rate/100) * 1.2);
+    var total = Math.round(base - saved);
+    document.getElementById('aiTotal').textContent = total.toLocaleString()+' kg';
+    var savePct = Math.round(saved/base*100);
+    document.getElementById('aiSaveTag').textContent = '节省 '+savePct+'%';
+
+    var aiDishes = [
+      {name:'红烧肉',orig:'180kg',adj:'126kg',change:'-30%',reason:'废弃率高'},
+      {name:'糖醋排骨',orig:'150kg',adj:'105kg',change:'-30%',reason:'剩饭率超标'},
+      {name:'番茄炒蛋',orig:'200kg',adj:'200kg',change:'0%',reason:'受欢迎'},
+      {name:'宫保鸡丁',orig:'160kg',adj:'180kg',change:'+12%',reason:'需求上升'},
+      {name:'紫菜蛋汤',orig:'120kg',adj:'144kg',change:'+20%',reason:'雨天推荐'}
+    ];
+    var tbHtml = '';
+    aiDishes.forEach(function(d){
+      var cls = d.change.indexOf('-')===0 ? 'row-red' : '';
+      var tagCls = d.change.indexOf('-')===0 ? 'tag-red' : (d.change.indexOf('+')===0 ? 'tag-green' : 'tag-yellow');
+      tbHtml += '<tr class="'+cls+'"><td style="font-weight:600">'+d.name+'</td><td>'+d.orig+'</td><td>'+d.adj+'</td>'
+        +'<td><span class="tag '+tagCls+'">'+d.change+'</span></td><td style="font-size:11px">'+d.reason+'</td></tr>';
+    });
+    document.getElementById('aiTableBody').innerHTML = tbHtml;
+
+    var r = document.getElementById('aiResult');
+    r.classList.add('show');
+    r.style.animation = 'none';
+    r.offsetHeight;
+    r.style.animation = 'fadeIn .3s ease';
+  });
+
+  /* ===== Tab3: Dish Ranking + Line Chart ===== */
+  var dishRank = [
+    {name:'红烧肉',left:320,rate:38,sug:'减量30%'},
+    {name:'糖醋排骨',left:280,rate:42,sug:'减量30%'},
+    {name:'炸鸡排',left:260,rate:55,sug:'减量20%'},
+    {name:'鱼香肉丝',left:190,rate:62,sug:'适量调整'},
+    {name:'宫保鸡丁',left:150,rate:70,sug:'维持现状'},
+    {name:'麻婆豆腐',left:95,rate:82,sug:'维持现状'},
+    {name:'蒜蓉西兰花',left:55,rate:90,sug:'可增量'},
+    {name:'紫菜蛋汤',left:30,rate:96,sug:'可增量'}
+  ];
+  var drHtml = '';
+  dishRank.forEach(function(d,i){
+    var cls = d.left >= 200 ? 'row-red' : '';
+    var rateCls = d.rate < 60 ? 'tag-red' : (d.rate < 80 ? 'tag-yellow' : 'tag-green');
+    drHtml += '<tr class="'+cls+'"><td>'+(i+1)+'</td><td style="font-weight:600">'+d.name+'</td>'
+      +'<td class="waste-val">'+d.left+'g</td><td><span class="tag '+rateCls+'">'+d.rate+'%</span></td>'
+      +'<td style="font-size:11px">'+d.sug+'</td></tr>';
+  });
+  document.getElementById('dishRankBody').innerHTML = drHtml;
+
+  /* Line chart */
+  var weekData = [
+    {day:'周一',val:2.1},
+    {day:'周二',val:1.8},
+    {day:'周三',val:1.5},
+    {day:'周四',val:1.9},
+    {day:'周五',val:1.3},
+    {day:'周六',val:0.8},
+    {day:'周日',val:0.6}
+  ];
+  var maxV = 0;
+  weekData.forEach(function(d){if(d.val>maxV)maxV=d.val});
+  maxV = Math.ceil(maxV/0.5)*0.5;
+  var lcArea = document.getElementById('lineChartArea');
+
+  /* build SVG line */
+  var points = [];
+  var barsHtml = '';
+  weekData.forEach(function(d,i){
+    var pct = (1 - d.val/maxV)*100;
+    points.push({x: i, y: pct});
+    barsHtml += '<div class="line-point-wrap">'
+      +'<span class="line-val">'+d.val+'</span>'
+      +'<span class="line-dot"></span>'
+      +'<div class="line-bar" style="height:'+pct+'%"></div>'
+      +'<span class="line-day">'+d.day+'</span>'
+      +'</div>';
+  });
+
+  /* SVG connecting line */
+  var svgPoints = points.map(function(p){
+    /* each point center = left offset + i * (width/7) + 50% */
+    var x = 0; /* will use percentage */
+    return x;
+  });
+  /* We'll use an absolutely positioned SVG */
+  var svgW = '100%';
+  var svgH = '100%';
+  var polyPoints = points.map(function(p,i){
+    var xPct = (i/(weekData.length-1))*100;
+    return xPct+'%,'+p.y+'%';
+  }).join(' ');
+
+  var yLabels = '';
+  for(var yi=0;yi<=4;yi++){
+    yLabels += '<span>'+((maxV/4)*(4-yi)).toFixed(1)+'</span>';
+  }
+
+  lcArea.innerHTML = '<div class="y-axis">'+yLabels+'</div>'
+    +'<svg class="line-connect" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;top:0;left:24px;right:0;bottom:0;width:calc(100% - 24px);height:100%">'
+    +'<polyline points="'+polyPoints+'" fill="none" stroke="#065F46" stroke-width="1.5" vector-effect="non-scaling-stroke"/>'
+    +'</svg>'
+    +barsHtml;
+
+  /* ===== Tab4: Purchase ===== */
+  var purchases = [
+    {icon:'🥬',name:'大白菜',orig:'300kg',adj:'210kg',pct:'-30%',save:'¥420'},
+    {icon:'🥩',name:'猪肉',orig:'200kg',adj:'140kg',pct:'-30%',save:'¥560'},
+    {icon:'🐔',name:'鸡胸肉',orig:'150kg',adj:'168kg',pct:'+12%',save:'-¥48'},
+    {icon:'🥚',name:'鸡蛋',orig:'80kg',adj:'80kg',pct:'0%',save:'¥0'},
+    {icon:'🐟',name:'带鱼',orig:'120kg',adj:'96kg',pct:'-20%',save:'¥180'},
+    {icon:'🥕',name:'胡萝卜',orig:'100kg',adj:'100kg',pct:'0%',save:'¥0'},
+    {icon:'🫑',name:'青椒',orig:'80kg',adj:'72kg',pct:'-10%',save:'¥32'},
+    {icon:'🍄',name:'香菇',orig:'60kg',adj:'60kg',pct:'0%',save:'¥0'}
+  ];
+  var pHtml = '';
+  purchases.forEach(function(p){
+    var saveNum = parseInt(p.save.replace(/[^\d-]/g,''));
+    var saveColor = saveNum > 0 ? 'color:#065F46' : (saveNum < 0 ? 'color:#DC2626' : 'color:#6B7280');
+    var pctColor = p.pct.indexOf('-')===0 ? 'color:#10B981' : (p.pct.indexOf('+')===0 ? 'color:#F59E0B' : 'color:#6B7280');
+    pHtml += '<div class="purchase-item">'
+      +'<div class="purchase-icon">'+p.icon+'</div>'
+      +'<div class="purchase-info">'
+      +'<div class="p-name">'+p.name+'</div>'
+      +'<div class="p-detail"><del>'+p.orig+'</del> &rarr; '+p.adj+'</div>'
+      +'</div>'
+      +'<div class="purchase-right">'
+      +'<div class="p-save" style="'+saveColor+'">'+p.save+'</div>'
+      +'<div class="p-percent" style="'+pctColor+'">'+p.pct+'</div>'
+      +'</div></div>';
+  });
+  document.getElementById('purchaseList').innerHTML = pHtml;
+
+  var sapConfirmed = false;
+  document.getElementById('btnSAP').addEventListener('click',function(){
+    if(sapConfirmed) return;
+    sapConfirmed = true;
+    this.disabled = true;
+    this.textContent = '已全部写入 SAP';
+    /* add status to items */
+    var items = document.querySelectorAll('.purchase-item');
+    items.forEach(function(item){
+      item.classList.add('confirmed');
+      var info = item.querySelector('.purchase-info');
+      var statusEl = document.createElement('div');
+      statusEl.className = 'p-status';
+      statusEl.textContent = '已确认';
+      info.appendChild(statusEl);
+    });
+  });
+
+  /* ===== Tab5: Ranking ===== */
+  var rankings = [
+    {cls:'计算机科学与技术2301班',teacher:'辅导员：王老师',rate:96.8},
+    {cls:'法学2302班',teacher:'辅导员：李老师',rate:95.2},
+    {cls:'外国语学院英语2301班',teacher:'辅导员：张老师',rate:94.5},
+    {cls:'机械工程学院2301班',teacher:'辅导员：陈老师',rate:93.1},
+    {cls:'数学与应用数学2301班',teacher:'辅导员：刘老师',rate:91.7},
+    {cls:'电子信息工程2302班',teacher:'辅导员：赵老师',rate:90.3},
+    {cls:'化学工程2301班',teacher:'辅导员：孙老师',rate:88.6},
+    {cls:'经济管理2301班',teacher:'辅导员：周老师',rate:86.2},
+    {cls:'物理学2301班',teacher:'辅导员：吴老师',rate:84.5},
+    {cls:'历史学2301班',teacher:'辅导员：郑老师',rate:72.3}
+  ];
+  var rHtml = '';
+  rankings.forEach(function(r,i){
+    var badgeCls = '';
+    if(i===0) badgeCls='gold';
+    else if(i===1) badgeCls='silver';
+    else if(i===2) badgeCls='bronze';
+    else if(i>=8) badgeCls='bottom';
+    var rateCls = r.rate>=90 ? 'high' : 'low';
+    rHtml += '<div class="rank-item">'
+      +'<div class="rank-badge '+badgeCls+'">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1)+'</div>'
+      +'<div class="rank-info">'
+      +'<div class="r-class">'+r.cls+'</div>'
+      +'<div class="r-sub">'+r.teacher+'</div>'
+      +'</div>'
+      +'<div class="rank-rate '+rateCls+'">'+r.rate+'%</div>'
+      +'</div>';
+  });
+  document.getElementById('rankList').innerHTML = rHtml;
+
+})();
+</script>
+</body>
+</html>

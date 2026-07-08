@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>供应链对接 · SAP S/4HANA</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f7f5;color:#1a2e1a;line-height:1.5;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+
+/* Shell */
+.shell{max-width:480px;margin:0 auto;min-height:100vh;background:#fff}
+
+/* Header */
+.hdr{background:#0d3b2e;padding:16px;color:#fff;position:sticky;top:0;z-index:50}
+.hdr-top{display:flex;align-items:center;justify-content:space-between}
+.hdr-back{font-size:1.1rem;color:#6ee7b7;font-weight:700}
+.hdr-back:hover{color:#a7f3d0}
+.hdr h1{font-size:.95rem;font-weight:700;letter-spacing:.3px}
+.hdr-status{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:.78rem;color:#6ee7b7}
+.hdr-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.6);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Sections */
+.sec{padding:16px;border-bottom:1px solid #e8ede9}
+.sec-title{font-size:.82rem;font-weight:700;color:#0d3b2e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #0d3b2e}
+
+/* API Cards */
+.api-card{background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px}
+.api-dot{width:9px;height:9px;border-radius:50%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,.5);flex-shrink:0;margin-top:4px}
+.api-info{flex:1;min-width:0}
+.api-name{font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:.76rem;font-weight:700;color:#065f46;word-break:break-all}
+.api-desc{font-size:.74rem;color:#6b7280;margin-top:3px;line-height:1.5}
+
+/* Stats grid 2x3 */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px;text-align:center}
+.stat-val{font-size:1.15rem;font-weight:800;color:#065f46}
+.stat-val.accent{color:#1b4f72}
+.stat-lbl{font-size:.68rem;color:#9ca3af;margin-top:2px}
+.stat:nth-child(5),.stat:nth-child(6){grid-column:span 1}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid #e5e7eb}
+.tbl-wrap table{width:100%;min-width:560px;border-collapse:collapse;font-size:.74rem}
+.tbl-wrap thead th{background:#f0fdf4;padding:10px 8px;text-align:left;font-size:.7rem;font-weight:700;color:#0d3b2e;white-space:nowrap;border-bottom:2px solid #a7f3d0;letter-spacing:.3px}
+.tbl-wrap tbody td{padding:9px 8px;border-bottom:1px solid #f3f4f6;white-space:nowrap}
+.tbl-wrap tbody tr:nth-child(even){background:#fafcfb}
+.code{font-family:"SF Mono",Consolas,monospace;font-size:.7rem;color:#1b4f72;font-weight:600}
+.down{color:#059669;font-weight:700}
+.zero{color:#9ca3af}
+.reason{white-space:normal;max-width:120px;line-height:1.4}
+
+/* Summary bar */
+.sum{margin-top:12px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.sum-item{text-align:center}
+.sum-val{font-size:1.05rem;font-weight:800;color:#1a2e1a}
+.sum-val.green{color:#059669}
+.sum-arrow{color:#9ca3af;font-size:.9rem}
+.sum-lbl{font-size:.66rem;color:#6b7280}
+
+/* Sandbox */
+.sel{width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.85rem;font-family:inherit;background:#f9fafb;color:#1a2e1a;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.sel:focus{outline:none;border-color:#34d399;background-color:#fff}
+
+.radio-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.radio-card{position:relative;border:2px solid #e5e7eb;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .15s;background:#f9fafb;-webkit-tap-highlight-color:transparent}
+.radio-card:active,.radio-card.sel{border-color:#0d9b6a;background:#ecfdf5}
+.radio-card input{position:absolute;opacity:0;pointer-events:none}
+.radio-title{font-size:.82rem;font-weight:700;color:#1a2e1a}
+.radio-desc{font-size:.68rem;color:#9ca3af;margin-top:2px}
+.radio-card.sel .radio-title{color:#065f46}
+
+.btn{width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#0d9b6a,#059669);color:#fff;font-size:.92rem;font-weight:700;font-family:inherit;cursor:pointer;margin-top:12px;transition:all .2s;-webkit-tap-highlight-color:transparent;letter-spacing:.3px}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+.btn.loading .spinner{display:inline-block}
+.btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* JSON */
+.json-box{margin-top:14px;background:#1e293b;border-radius:10px;padding:14px;overflow-x:auto;font-family:"SF Mono","Fira Code",Consolas,monospace;font-size:.72rem;line-height:1.7;color:#cbd5e1;min-height:80px;max-height:340px;overflow-y:auto;border:2px solid transparent;transition:border-color .5s}
+.json-box.ok{border-color:#10b981;animation:pulseB 2s ease-in-out 2}
+@keyframes pulseB{0%,100%{border-color:#10b981;box-shadow:none}50%{border-color:#34d399;box-shadow:0 0 10px rgba(16,185,129,.15)}}
+.jk{color:#7dd3fc}.js{color:#86efac}.jn{color:#fcd34d}.jp{color:#475569;font-style:italic}
+
+.json-badge{display:none;margin-top:8px;padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:600;background:#d1fae5;color:#065f46;width:fit-content}
+.json-badge.show{display:inline-block}
+
+/* ESG cards */
+.esg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.esg-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 10px;text-align:center}
+.esg-val{font-size:1.1rem;font-weight:800;color:#065f46;margin-bottom:2px}
+.esg-lbl{font-size:.68rem;color:#6b7280}
+.esg-bar{margin-top:8px;background:linear-gradient(135deg,#ecfdf5,#dbeafe);border:1px solid #a7f3d0;border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between}
+.esg-bar-label{font-size:.8rem;color:#374151;font-weight:500}
+.esg-bar-val{font-size:1.15rem;font-weight:800;color:#065f46}
+.esg-bar-sub{font-size:.66rem;color:#9ca3af;text-align:right}
+
+/* Footer */
+.ftr{padding:20px 16px;text-align:center;font-size:.68rem;color:#b0b8b2}
+
+/* Scroll hint */
+.scroll-hint{font-size:.66rem;color:#9ca3af;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-top">
+    <a href="index.html" class="hdr-back">&larr;</a>
+    <h1>供应链对接 &middot; SAP S/4HANA</h1>
+    <span style="width:20px"></span>
+  </div>
+  <div class="hdr-status"><span class="hdr-dot"></span> 系统在线 &middot; API延迟 23ms</div>
+</header>
+
+<!-- Section 1: API -->
+<section class="sec">
+  <div class="sec-title">1. API 接口</div>
+
+  <div class="api-card">
+    <div class="api-dot"></div>
+    <div class="api-info">
+      <div class="api-name">/SAP_MRP_PURCHASE_PLAN_UPDATE</div>
+      <div class="api-desc">浪费数据 &rarr; 物料需求计划(MRP)自动调整采购量与配送计划</div>
+    </div>
+  </div>
+  <div class="api-card">
+    <div class="api-dot"></div>
+    <div class="api-info">
+      <div class="api-name">/SAP_GREEN_LEDGER_CARBON_TAX</div>
+      <div class="api-desc">碳减排量 &rarr; 企业绿色分类账，纳入ESG报告与碳税核算</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">47</div><div class="stat-lbl">同步次数</div></div>
+    <div class="stat"><div class="stat-val">2分钟前</div><div class="stat-lbl">最近同步</div></div>
+    <div class="stat"><div class="stat-val">1,286</div><div class="stat-lbl">浪费记录(条)</div></div>
+    <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">采购调整(次)</div></div>
+    <div class="stat"><div class="stat-val accent">&yen;12,850</div><div class="stat-lbl">节约金额</div></div>
+    <div class="stat"><div class="stat-val accent">2,450kg</div><div class="stat-lbl">碳减排CO&#8322;</div></div>
+  </div>
+</section>
+
+<!-- Section 2: Table -->
+<section class="sec">
+  <div class="sec-title">2. 采购订单调整</div>
+  <div class="scroll-hint">&larr; 左右滑动查看完整表格 &rarr;</div>
+  <div class="tbl-wrap" style="margin-top:8px">
+    <table>
+      <thead>
+        <tr>
+          <th>物料编码</th><th>名称</th><th>原量</th><th>调整量</th><th>幅度</th><th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="code">MAT_PORK_091</span></td>
+          <td>猪五花肉</td><td>400kg</td><td>280kg</td>
+          <td><span class="down">&darr;30%</span></td>
+          <td><span class="reason">红烧肉剩余率&gt;40%</span></td>
+        </tr>
+        <tr>
+          <td><span class="code">MAT_BROCCOLI_05</span></td>
+          <td>西兰花</td><td>500kg</td><td>400kg</td>
+          <td><span class="down">&darr;20%</span></td>
+          <td><span class="reason">剩余65g/盘&uarr;28%</span></td>
+        </tr>
+        <tr>
+          <td><span class="code">MAT_RICE_01</span></td>
+          <td>大米</td><td>800kg</td><td>640kg</td>
+          <td><span class="down">&darr;20%</span></td>
+          <td><span class="reason">米饭剩余率偏高</span></td>
+        </tr>
+        <tr>
+          <td><span class="code">MAT_EGG_02</span></td>
+          <td>鲜鸡蛋</td><td>200kg</td><td>180kg</td>
+          <td><span class="down">&darr;10%</span></td>
+          <td><span class="reason">需求稳定微调</span></td>
+        </tr>
+        <tr>
+          <td><span class="code">MAT_CHICKEN_03</span></td>
+          <td>鸡胸肉</td><td>300kg</td><td>300kg</td>
+          <td><span class="zero">&rarr;0%</span></td>
+          <td><span class="reason">维持不变</span></td>
+        </tr>
+        <tr>
+          <td><span class="code">MAT_TOFU_04</span></td>
+          <td>豆腐</td><td>150kg</td><td>120kg</td>
+          <td><span class="down">&darr;20%</span></td>
+          <td><span class="reason">剩余率偏高</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="sum">
+    <div class="sum-item"><div class="sum-val">&yen;8,765</div><div class="sum-lbl">原总额</div></div>
+    <div class="sum-arrow">&rarr;</div>
+    <div class="sum-item"><div class="sum-val">&yen;7,170</div><div class="sum-lbl">调整后</div></div>
+    <div class="sum-arrow">&rarr;</div>
+    <div class="sum-item"><div class="sum-val green">&yen;1,595</div><div class="sum-lbl">节省(&darr;18.2%)</div></div>
+  </div>
+</section>
+
+<!-- Section 3: Sandbox -->
+<section class="sec">
+  <div class="sec-title">3. 沙箱测试器</div>
+
+  <label style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:6px;display:block">选择食材</label>
+  <select id="matSel" class="sel">
+    <option value="">-- 请选择 --</option>
+    <option value="MAT_PORK_091">猪五花肉</option>
+    <option value="MAT_BROCCOLI_05">西兰花</option>
+    <option value="MAT_RICE_01">大米</option>
+    <option value="MAT_EGG_02">鲜鸡蛋</option>
+    <option value="MAT_CHICKEN_03">鸡胸肉</option>
+  </select>
+
+  <label style="font-size:.78rem;font-weight:600;color:#374151;margin-top:14px;margin-bottom:2px;display:block">浪费等级</label>
+  <div class="radio-group" id="wg">
+    <label class="radio-card" onclick="pickW(this,'light')"><input type="radio" name="wl" value="light"><div class="radio-title">轻度</div><div class="radio-desc">30-50kg</div></label>
+    <label class="radio-card" onclick="pickW(this,'medium')"><input type="radio" name="wl" value="medium"><div class="radio-title">中度</div><div class="radio-desc">50-80kg</div></label>
+    <label class="radio-card" onclick="pickW(this,'heavy')"><input type="radio" name="wl" value="heavy"><div class="radio-title">严重</div><div class="radio-desc">80-120kg</div></label>
+    <label class="radio-card" onclick="pickW(this,'extreme')"><input type="radio" name="wl" value="extreme"><div class="radio-title">极度</div><div class="radio-desc">120kg+</div></label>
+  </div>
+
+  <button id="goBtn" class="btn" onclick="fire()" disabled>
+    <span class="spinner"></span><span class="btn-text">触发SAP采购削减</span>
+  </button>
+
+  <div id="jBadge" class="json-badge">SUCCESS</div>
+  <div id="jOut" class="json-box"><span class="jp">// 选择食材和浪费等级后点击触发按钮...</span></div>
+</section>
+
+<!-- Section 4: ESG -->
+<section class="sec">
+  <div class="sec-title">4. ESG 绿色分类账</div>
+  <div class="esg">
+    <div class="esg-card"><div class="esg-val">2,450kg</div><div class="esg-lbl">减少采购</div></div>
+    <div class="esg-card"><div class="esg-val">18,600L</div><div class="esg-lbl">水资源节约</div></div>
+    <div class="esg-card"><div class="esg-val">1,280kg</div><div class="esg-lbl">厨余减少</div></div>
+    <div class="esg-card"><div class="esg-val">4,860kg</div><div class="esg-lbl">碳减排 CO&#8322;</div></div>
+  </div>
+  <div class="esg-bar">
+    <div>
+      <div class="esg-bar-label">经济价值</div>
+      <div class="esg-bar-sub">碳交易+采购节约+处理减免</div>
+    </div>
+    <div><div class="esg-bar-val">&yen;15,200</div></div>
+  </div>
+</section>
+
+<div class="ftr">GreenEat AI &times; SAP S/4HANA | ERP-PRD-01</div>
+
+</div><!-- /shell -->
+
+<script>
+(function(){
+var matD={
+'MAT_PORK_091':{n:'猪五花肉',u:'公斤',oq:'400公斤',aq:'280公斤',r:'30%',s:'\u00a53,480',c:'435.6kg CO\u2082'},
+'MAT_BROCCOLI_05':{n:'西兰花',u:'公斤',oq:'500公斤',aq:'400公斤',r:'20%',s:'\u00a51,200',c:'186.0kg CO\u2082'},
+'MAT_RICE_01':{n:'大米',u:'公斤',oq:'800公斤',aq:'640公斤',r:'20%',s:'\u00a52,560',c:'312.0kg CO\u2082'},
+'MAT_EGG_02':{n:'鲜鸡蛋',u:'公斤',oq:'200公斤',aq:'180公斤',r:'10%',s:'\u00a5600',c:'52.8kg CO\u2082'},
+'MAT_CHICKEN_03':{n:'鸡胸肉',u:'公斤',oq:'300公斤',aq:'300公斤',r:'0%',s:'\u00a50',c:'0kg CO\u2082'}
+};
+var wlM={light:{m:.85},medium:{m:.75},heavy:{m:.65},extreme:{m:.50}};
+var wlN={light:'轻度浪费',medium:'中度浪费',heavy:'严重浪费',extreme:'极度浪费'};
+var sm='',sl='';
+document.getElementById('matSel').addEventListener('change',function(e){sm=e.target.value;ck()});
+window.pickW=function(el,l){
+var cs=document.querySelectorAll('#wg .radio-card');
+for(var i=0;i<cs.length;i++)cs[i].classList.remove('sel');
+el.classList.add('sel');el.querySelector('input').checked=true;sl=l;ck();
+};
+function ck(){document.getElementById('goBtn').disabled=!(sm&&sl)}
+window.fire=function(){
+if(!sm||!sl)return;
+var btn=document.getElementById('goBtn'),out=document.getElementById('jOut'),badge=document.getElementById('jBadge');
+btn.disabled=true;btn.classList.add('loading');badge.classList.remove('show');out.classList.remove('ok');
+out.innerHTML='<span class="jp">// 正在调用 SAP S/4HANA MRP 接口...\n// Connecting to ERP-PRD-01...</span>';
+setTimeout(function(){out.innerHTML='<span class="jp">// 接收 ERP 响应...</span>';},700);
+setTimeout(function(){
+var d=matD[sm],m=wlM[sl];
+var oq=parseInt(d.oq),aq=Math.round(oq*m.m),rp=Math.round((1-m.m)*100);
+var now=new Date();
+var ts=now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+'T'+p(now.getHours())+':'+p(now.getMinutes())+':'+p(now.getSeconds())+'+08:00';
+var j={
+status:"SUCCESS",timestamp:ts,source:"GreenEat AI Waste Detection",
+material_id:sm,material_name:d.n,waste_level:wlN[sl],
+original_order_qty:d.oq,adjusted_order_qty:aq+d.u,
+reduction_rate:rp+"%",cost_saving:d.s,
+estimated_carbon_reduction:d.c,
+sap_mrp_confirmation:"ORDER_ADJUSTED",
+delivery_instruction:"供应商次日按调整后订单配送"
+};
+var s=JSON.stringify(j,null,2);
+var h=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+.replace(/"([^"]+)":/g,'<span class="jk">"$1"</span>:')
+.replace(/: "([^"]+)"/g,': <span class="js">"$1"</span>')
+.replace(/: (\d+\.?\d*)/g,': <span class="jn">$1</span>');
+out.innerHTML=h;out.classList.add('ok');badge.classList.add('show');
+btn.disabled=false;btn.classList.remove('loading');
+},2000);
+};
+function p(n){return n<10?'0'+n:''+n}
+})();
+</script>
+</body>
+</html>

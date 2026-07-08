@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GreenEat 就餐端</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #F0FDF4; color: #1F2937; font-size: 14px; line-height: 1.5; overflow-x: hidden;
+    }
+    body { min-height: 100vh; }
+
+    /* ===== App Shell ===== */
+    .app {
+      width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh;
+      background: #F0FDF4; position: relative; overflow-x: hidden;
+    }
+
+    /* ===== Top Nav ===== */
+    .topbar {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; z-index: 100;
+      background: linear-gradient(135deg, #0D9B6A, #065F46);
+      color: #fff; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(13,155,106,0.3);
+    }
+    .topbar .back {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); border: none; color: #fff;
+      font-size: 17px; cursor: pointer; text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar .ttl { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+    .topbar .badge {
+      background: rgba(255,255,255,0.2); border-radius: 20px;
+      padding: 3px 10px; font-size: 12px; font-weight: 600;
+    }
+
+    /* ===== Page Container ===== */
+    .pg-wrap {
+      padding-top: 50px; padding-bottom: 56px;
+      overflow-y: auto;
+    }
+    .pg { display: none; padding: 14px; }
+    .pg.active { display: block; }
+
+    /* ===== Card ===== */
+    .card {
+      background: #FFFFFF; border-radius: 16px; padding: 16px;
+      margin-bottom: 12px; box-shadow: 0 2px 12px rgba(13,155,106,0.08);
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ===== Home: Coin Hero ===== */
+    .coin-hero {
+      background: linear-gradient(135deg, #0D9B6A, #059669);
+      border-radius: 16px; padding: 22px 16px; color: #fff;
+      text-align: center; position: relative; overflow: hidden; margin-bottom: 12px;
+    }
+    .coin-hero::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1);
+    }
+    .coin-hero::after {
+      content: ''; position: absolute; bottom: -20px; left: -20px;
+      width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.08);
+    }
+    .coin-hero .lbl { font-size: 12px; opacity: 0.9; position: relative; }
+    .coin-hero .amt {
+      font-size: 38px; font-weight: 800; letter-spacing: -1px;
+      position: relative; text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .coin-hero .amt em { font-style: normal; font-size: 14px; font-weight: 500; margin-left: 2px; }
+    .coin-hero .sub { font-size: 11px; opacity: 0.8; margin-top: 3px; position: relative; }
+
+    /* ===== Stats Grid ===== */
+    .stats { display: flex; gap: 10px; margin-bottom: 12px; }
+    .st {
+      flex: 1; background: #FFFFFF; border-radius: 10px; padding: 12px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); text-align: center;
+    }
+    .st .v { font-size: 18px; font-weight: 700; color: #0D9B6A; }
+    .st .l { font-size: 10px; color: #6B7280; margin-top: 2px; }
+
+    /* ===== Voucher ===== */
+    .voucher {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+      border-radius: 10px; padding: 12px 14px; border: 1px solid #F59E0B;
+      cursor: pointer; margin-bottom: 12px;
+    }
+    .voucher:active { transform: scale(0.98); }
+    .voucher .vh { display: flex; justify-content: space-between; align-items: center; }
+    .voucher .vt { font-weight: 600; color: #92400E; font-size: 13px; }
+    .voucher .ve { font-size: 10px; color: #B45309; }
+    .voucher .vd {
+      max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+      font-size: 11px; color: #78350F; line-height: 1.6;
+    }
+    .voucher.open .vd { max-height: 80px; margin-top: 8px; }
+    .voucher .arr { transition: transform 0.3s ease; font-size: 11px; color: #B45309; }
+    .voucher.open .arr { transform: rotate(180deg); }
+
+    /* ===== Button ===== */
+    .cbtn {
+      width: 100%; padding: 12px; border-radius: 10px;
+      background: linear-gradient(135deg, #0D9B6A, #065F46);
+      color: #fff; font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+      margin-top: 10px;
+    }
+    .cbtn:active { transform: scale(0.97); }
+
+    /* ===== Order: Menu Item ===== */
+    .menu-item {
+      background: #FFFFFF; border-radius: 10px; padding: 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+      display: flex; gap: 10px; align-items: center;
+    }
+    .menu-item:active { background: #f9fafb; }
+    .menu-item .fi {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: linear-gradient(135deg, #34D399, #0D9B6A);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .menu-item .fn { font-weight: 600; font-size: 13px; }
+    .menu-item .fm {
+      font-size: 10px; color: #6B7280; margin-top: 1px;
+      display: flex; gap: 8px;
+    }
+    .menu-item .fa { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+
+    .size-btns { display: flex; gap: 3px; }
+    .sb {
+      padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 600;
+      border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer;
+    }
+    .sb.sel { border-color: #0D9B6A; background: #ECFDF5; color: #0D9B6A; }
+
+    .qc { display: flex; align-items: center; gap: 6px; }
+    .qb {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1.5px solid #0D9B6A; background: #fff; color: #0D9B6A;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qb:active { background: #0D9B6A; color: #fff; }
+    .qn { font-size: 15px; font-weight: 700; min-width: 18px; text-align: center; }
+
+    /* ===== Order Summary ===== */
+    .summary {
+      background: #FFFFFF; border-radius: 16px; padding: 12px 14px;
+      box-shadow: 0 -3px 16px rgba(0,0,0,0.06); margin-top: 8px;
+    }
+    .sr { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
+    .sr.t {
+      font-size: 14px; font-weight: 700; color: #0D9B6A;
+      border-top: 1px solid #E5E7EB; padding-top: 6px; margin-top: 5px;
+    }
+    .sr .v { font-weight: 600; }
+
+    /* ===== Recycle: Slider ===== */
+    .slider-section { text-align: center; padding: 16px 0; }
+    .range-wrap { padding: 0 10px 8px; }
+    .range-wrap input[type=range] {
+      width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
+      background: #E5E7EB; border-radius: 3px; outline: none;
+    }
+    .range-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+      background: #0D9B6A; border: 3px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2); cursor: pointer;
+    }
+    .slider-big {
+      width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 8px solid #0D9B6A; transition: border-color 0.3s ease;
+    }
+    .slider-big .sv { font-size: 36px; font-weight: 800; line-height: 1; }
+    .slider-big .sl { font-size: 11px; color: #6B7280; }
+    .slider-big.green { border-color: #0D9B6A; }
+    .slider-big.green .sv { color: #0D9B6A; }
+    .slider-big.yellow { border-color: #F59E0B; }
+    .slider-big.yellow .sv { color: #F59E0B; }
+    .slider-big.red { border-color: #EF4444; }
+    .slider-big.red .sv { color: #EF4444; }
+
+    .recycle-info { display: flex; justify-content: space-around; margin: 12px 0; }
+    .ri { text-align: center; }
+    .ri .rv { font-size: 20px; font-weight: 700; }
+    .ri .rv.g { color: #0D9B6A; }
+    .ri .rv.r { color: #EF4444; }
+    .ri .rv.y { color: #F59E0B; }
+    .ri .rl { font-size: 10px; color: #6B7280; margin-top: 2px; }
+
+    .recycle-btn {
+      width: 100%; padding: 16px; border-radius: 16px;
+      background: linear-gradient(135deg, #0D9B6A, #059669);
+      color: #fff; font-size: 16px; font-weight: 700; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 12px rgba(13,155,106,0.3); margin-top: 12px;
+    }
+    .recycle-btn:active { transform: scale(0.97); }
+
+    /* Recycle animation */
+    .recycle-anim { display: none; text-align: center; padding: 30px 20px; }
+    .recycle-anim.show { display: block; }
+    .scan-txt { font-size: 13px; color: #6B7280; margin-top: 10px; }
+
+    /* Recycle result */
+    .recycle-result { display: none; }
+    .recycle-result.show { display: block; }
+    .result-row {
+      display: flex; justify-content: space-between; padding: 8px 0;
+      border-bottom: 1px solid #E5E7EB; font-size: 12px;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row .rl2 { color: #6B7280; }
+    .result-row .rv2 { font-weight: 600; }
+    .result-row .rv2.x { text-decoration: line-through; color: #9CA3AF; }
+    .result-row .rv2.bad { color: #EF4444; }
+    .result-row .rv2.good { color: #0D9B6A; }
+
+    /* Result card */
+    .rcard { border-radius: 16px; padding: 16px; text-align: center; margin-top: 12px; }
+    .rcard.good { background: linear-gradient(135deg, #ECFDF5, #D1FAE5); border: 2px solid #34D399; }
+    .rcard.ok { background: linear-gradient(135deg, #FEF3C7, #FDE68A); border: 2px solid #F59E0B; }
+    .rcard.bad { background: linear-gradient(135deg, #FEE2E2, #FECACA); border: 2px solid #EF4444; }
+    .rcard .rt { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .rcard .rc { font-size: 24px; font-weight: 800; margin: 6px 0; }
+    .rcard .rc.plus { color: #0D9B6A; }
+    .rcard .rc.minus { color: #EF4444; }
+    .rcard .rd { font-size: 12px; color: #6B7280; line-height: 1.8; }
+
+    /* ===== Nutrition: CSS Rings ===== */
+    .nrings { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .nring { text-align: center; }
+    .nring-wrap {
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .nring-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 50%; border: 8px solid #E5E7EB;
+    }
+    .nring-fg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 50%; border: 8px solid #0D9B6A;
+      clip-path: polygon(50% 0%, 50% 50%, 50% 0%);
+      transition: clip-path 1s ease;
+    }
+    .nring-inner {
+      position: relative; z-index: 2; text-align: center;
+    }
+    .nring-val { font-size: 14px; font-weight: 700; color: #1F2937; }
+    .nring-unit { font-size: 8px; color: #9CA3AF; }
+    .nring-lbl { font-size: 10px; color: #6B7280; margin-top: 3px; }
+    .nring-target { font-size: 9px; color: #9CA3AF; }
+
+    /* ===== My: User ===== */
+    .user-card {
+      background: linear-gradient(135deg, #059669, #065F46);
+      border-radius: 16px; padding: 20px 16px; color: #fff;
+      text-align: center; position: relative; overflow: hidden; margin-bottom: 12px;
+    }
+    .user-card .avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,0.25); margin: 0 auto 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; position: relative;
+    }
+    .user-card .uname { font-size: 16px; font-weight: 700; position: relative; }
+    .user-card .uinfo { font-size: 11px; opacity: 0.8; margin-top: 2px; position: relative; }
+
+    .sitem {
+      display: flex; align-items: center; padding: 12px 0;
+      border-bottom: 1px solid #E5E7EB; cursor: pointer;
+    }
+    .sitem:last-child { border-bottom: none; }
+    .sitem:active { opacity: 0.7; }
+    .sitem .si { font-size: 20px; margin-right: 12px; width: 28px; text-align: center; flex-shrink: 0; }
+    .sitem .sf { flex: 1; }
+    .sitem .st { font-size: 13px; font-weight: 600; }
+    .sitem .sd { font-size: 10px; color: #6B7280; }
+    .sitem .sa { color: #9CA3AF; font-size: 12px; }
+
+    /* ===== Bottom Tab ===== */
+    .btab {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; background: #fff;
+      display: flex; border-top: 1px solid #E5E7EB; z-index: 100;
+      height: 56px;
+    }
+    .tab-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 1px; cursor: pointer; border: none; background: none;
+      color: #9CA3AF; font-size: 10px; transition: color 0.2s;
+    }
+    .tab-btn.active { color: #0D9B6A; }
+    .tab-btn .ico { font-size: 20px; }
+    .tab-btn .lbl { font-weight: 600; }
+    .tab-btn:active { opacity: 0.6; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Top Bar ===== -->
+  <nav class="topbar">
+    <a href="index.html" class="back">&larr;</a>
+    <div class="ttl">GreenEat 就餐端</div>
+    <div class="badge">&#x1F33F; <span id="navCoins">2,450</span></div>
+  </nav>
+
+  <!-- ===== Page Content ===== -->
+  <div class="pg-wrap">
+
+    <!-- ===== Tab 1: Home ===== -->
+    <div class="pg active" id="pg-home">
+      <div class="coin-hero">
+        <div class="lbl">我的碳币余额</div>
+        <div class="amt" id="heroCoins">2,450<em>碳币</em></div>
+        <div class="sub">累计减碳 32.6kg CO&#8322; | 连续光盘 18 天</div>
+      </div>
+
+      <div class="stats">
+        <div class="st"><div class="v">186g</div><div class="l">今日碳减排</div></div>
+        <div class="st"><div class="v">4.2kg</div><div class="l">本月减排</div></div>
+        <div class="st"><div class="v">87%</div><div class="l">光盘率</div></div>
+      </div>
+
+      <div class="card-title">&#x1F3E0; 我的早餐券</div>
+      <div class="voucher" id="voucher" onclick="toggleVoucher()">
+        <div class="vh">
+          <div>
+            <div class="vt">&#x1F35E; 明日早餐券 x 1</div>
+            <div class="ve">有效期至明天 8:00</div>
+          </div>
+          <span class="arr">&#9660;</span>
+        </div>
+        <div class="vd">凭此券可在任意食堂窗口兑换一份标准早餐（含包子/馒头+豆浆+鸡蛋）。请于有效期内使用，逾期自动失效。</div>
+      </div>
+
+      <button class="cbtn" onclick="switchTab('order')">开始选餐 &rarr;</button>
+    </div>
+
+    <!-- ===== Tab 2: Order ===== -->
+    <div class="pg" id="pg-order">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:700">&#x1F37D;&#xFE0F; 今日菜单</div>
+        <span style="font-size:10px;color:#9CA3AF">午餐 11:00-13:00</span>
+      </div>
+      <div id="menuList"></div>
+      <div class="summary" id="orderSummary">
+        <div class="sr"><span>已选菜品</span><span class="v" id="sumCount">0 道</span></div>
+        <div class="sr"><span>预计热量</span><span class="v" id="sumCal">0 kcal</span></div>
+        <div class="sr t"><span>总价</span><span class="v" id="sumPrice">&yen;0</span></div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 3: Recycle ===== -->
+    <div class="pg" id="pg-recycle">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">&#x267B;&#xFE0F; 光盘回收</div>
+      <p style="font-size:12px;color:#6B7280;margin-bottom:10px">拖动滑块设置您的光盘比例</p>
+
+      <div class="slider-big green" id="sliderCircle">
+        <div class="sv" id="sliderPct">85%</div>
+        <div class="sl" id="sliderLabel">光盘达人</div>
+      </div>
+
+      <div class="range-wrap">
+        <input type="range" min="0" max="100" value="85" id="cleanSlider" oninput="onSliderChange(this.value)">
+      </div>
+
+      <div class="recycle-info">
+        <div class="ri"><div class="rv g" id="wasteGram">75g</div><div class="rl">浪费克数</div></div>
+        <div class="ri"><div class="rv g" id="coinChange">+50</div><div class="rl">碳币变化</div></div>
+      </div>
+
+      <button class="recycle-btn" id="recycleBtn" onclick="startRecycle()">
+        <span style="font-size:22px">&#x1F6AE;</span> 送至AI回收处称重
+      </button>
+
+      <div class="recycle-anim" id="recycleAnim">
+        <div style="font-size:64px">&#x1F374;</div>
+        <div class="scan-txt">AI 正在识别称重中...</div>
+      </div>
+
+      <div class="recycle-result" id="recycleResult">
+        <div class="card">
+          <div class="card-title">&#x1F50D; AI 识别结果</div>
+          <div class="result-row"><span class="rl2">餐盘总剩余</span><span class="rv2" id="rTotal">--</span></div>
+          <div class="result-row"><span class="rl2">骨头/鱼刺</span><span class="rv2 x" id="rBone">--</span></div>
+          <div class="result-row"><span class="rl2">汤汁</span><span class="rv2 x" id="rSoup">--</span></div>
+          <div class="result-row"><span class="rl2">纸巾</span><span class="rv2 x" id="rNapkin">--</span></div>
+          <div class="result-row" style="border-top:2px solid #0D9B6A;padding-top:10px"><span class="rl2" style="font-weight:700">可食用浪费</span><span class="rv2 bad" id="rEdible">--</span></div>
+          <div class="result-row"><span class="rl2" style="font-weight:700">光盘率</span><span class="rv2 good" id="rRate">--</span></div>
+        </div>
+        <div class="rcard" id="resultRCard">
+          <div class="rt" id="resultTitle">--</div>
+          <div class="rc" id="resultCoins">--</div>
+          <div class="rd" id="resultDetail">--</div>
+        </div>
+        <button class="cbtn" onclick="resetRecycle()">完成，返回首页</button>
+      </div>
+    </div>
+
+    <!-- ===== Tab 4: Nutrition ===== -->
+    <div class="pg" id="pg-nutr">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">&#x1F4CA; 营养分析</div>
+
+      <div class="card">
+        <div class="card-title">&#x1F4AA; 今日摄入概览</div>
+        <div class="nrings" id="nrings">
+          <div class="nring">
+            <div class="nring-wrap">
+              <div class="nring-bg"></div>
+              <div class="nring-fg" id="nCalFg"></div>
+              <div class="nring-inner">
+                <div class="nring-val">1650</div>
+                <div class="nring-unit">kcal</div>
+              </div>
+            </div>
+            <div class="nring-lbl">热量</div>
+            <div class="nring-target">/ 2000 kcal</div>
+            <div style="font-size:10px;color:#0D9B6A;font-weight:600;margin-top:2px" id="nCalPct">82.5%</div>
+          </div>
+          <div class="nring">
+            <div class="nring-wrap">
+              <div class="nring-bg"></div>
+              <div class="nring-fg" id="nProFg" style="border-color:#EF4444"></div>
+              <div class="nring-inner">
+                <div class="nring-val">68</div>
+                <div class="nring-unit">g</div>
+              </div>
+            </div>
+            <div class="nring-lbl">蛋白质</div>
+            <div class="nring-target">/ 75g</div>
+            <div style="font-size:10px;color:#EF4444;font-weight:600;margin-top:2px" id="nProPct">90.7%</div>
+          </div>
+          <div class="nring">
+            <div class="nring-wrap">
+              <div class="nring-bg"></div>
+              <div class="nring-fg" id="nCarbFg" style="border-color:#F97316"></div>
+              <div class="nring-inner">
+                <div class="nring-val">210</div>
+                <div class="nring-unit">g</div>
+              </div>
+            </div>
+            <div class="nring-lbl">碳水</div>
+            <div class="nring-target">/ 250g</div>
+            <div style="font-size:10px;color:#F97316;font-weight:600;margin-top:2px" id="nCarbPct">84.0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">&#x1F4AC; 今日饮食评价</div>
+        <div style="font-size:12px;color:#6B7280;line-height:1.8">
+          <b style="color:#1F2937">整体评价：</b>今日饮食摄入较为均衡，热量控制在合理范围内，蛋白质和碳水摄入接近推荐值。建议晚餐适当增加蔬菜摄入，补充维生素和膳食纤维。继续保持小份米饭的习惯，减少食物浪费。
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 5: My ===== -->
+    <div class="pg" id="pg-my">
+      <div class="user-card">
+        <div class="avatar">&#x1F468;&#x200D;&#x1F393;</div>
+        <div class="uname">张同学</div>
+        <div class="uinfo">计算机科学与技术学院 大二</div>
+      </div>
+
+      <div class="card" style="padding:4px 14px">
+        <div class="sitem" onclick="menuClick('就餐记录')">
+          <span class="si">&#x1F4C5;</span>
+          <div class="sf"><div class="st">就餐记录</div><div class="sd">查看历史用餐数据</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+        <div class="sitem" onclick="menuClick('排行榜')">
+          <span class="si">&#x1F3C6;</span>
+          <div class="sf"><div class="st">排行榜</div><div class="sd">本周第12名 | 院系第3名</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+        <div class="sitem" onclick="menuClick('饮食偏好')">
+          <span class="si">&#x1F9E0;</span>
+          <div class="sf"><div class="st">饮食偏好</div><div class="sd">设置忌口、过敏、口味偏好</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+        <div class="sitem" onclick="menuClick('早餐券')">
+          <span class="si">&#x1F3E0;</span>
+          <div class="sf"><div class="st">早餐券</div><div class="sd">可用 1 张 | 已使用 12 张</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+        <div class="sitem" onclick="menuClick('碳币商城')">
+          <span class="si">&#x1F4B0;</span>
+          <div class="sf"><div class="st">碳币商城</div><div class="sd">兑换优惠券和周边</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+        <div class="sitem" onclick="menuClick('设置')">
+          <span class="si">&#x2699;&#xFE0F;</span>
+          <div class="sf"><div class="st">设置</div><div class="sd">通知、隐私、账户管理</div></div>
+          <span class="sa">&#9654;</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .pg-wrap -->
+
+  <!-- ===== Bottom Tab ===== -->
+  <div class="btab">
+    <button class="tab-btn active" id="tab-home" onclick="switchTab('home')"><span class="ico">&#x1F3E0;</span><span class="lbl">首页</span></button>
+    <button class="tab-btn" id="tab-order" onclick="switchTab('order')"><span class="ico">&#x1F37D;&#xFE0F;</span><span class="lbl">选餐</span></button>
+    <button class="tab-btn" id="tab-recycle" onclick="switchTab('recycle')"><span class="ico">&#x267B;&#xFE0F;</span><span class="lbl">回收</span></button>
+    <button class="tab-btn" id="tab-nutr" onclick="switchTab('nutr')"><span class="ico">&#x1F4CA;</span><span class="lbl">营养</span></button>
+    <button class="tab-btn" id="tab-my" onclick="switchTab('my')"><span class="ico">&#x1F464;</span><span class="lbl">我的</span></button>
+  </div>
+
+</div><!-- end .app -->
+
+<script>
+/* ===== Menu Data ===== */
+var menuData = [
+  { id: 1, name: '红烧肉', emoji: '\uD83C\uDF56', price: 6, cal: 380, size: 'normal', qty: 0 },
+  { id: 2, name: '蒜蓉西兰花', emoji: '\uD83E\uDD66', price: 4, cal: 120, size: 'normal', qty: 0 },
+  { id: 3, name: '番茄炒蛋', emoji: '\uD83E\uDD5A', price: 5, cal: 200, size: 'normal', qty: 0 },
+  { id: 4, name: '宫保鸡丁', emoji: '\uD83C\uDF57', price: 6, cal: 350, size: 'normal', qty: 0 },
+  { id: 5, name: '清炒时蔬', emoji: '\uD83E\uDD6C', price: 3, cal: 80, size: 'normal', qty: 0 },
+  { id: 6, name: '糖醋排骨', emoji: '\uD83C\uDF69', price: 8, cal: 420, size: 'normal', qty: 0 },
+  { id: 7, name: '麻婆豆腐', emoji: '\uD83E\uDDC6', price: 4, cal: 180, size: 'normal', qty: 0 },
+  { id: 8, name: '紫菜蛋花汤', emoji: '\uD83C\uDF72', price: 2, cal: 50, size: 'normal', qty: 0 }
+];
+
+var sizeMul = { small: 0.6, normal: 1 };
+var sizeLabel = { small: '小份', normal: '正常份' };
+var totalCoins = 2450;
+var currentSliderVal = 85;
+
+/* ===== Tab Switching ===== */
+function switchTab(tabId) {
+  var pages = document.getElementsByClassName('pg');
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].style.display = 'none';
+    pages[i].className = 'pg';
+  }
+  var targetPage = document.getElementById('pg-' + tabId);
+  if (targetPage) {
+    targetPage.style.display = 'block';
+    targetPage.className = 'pg active';
+  }
+
+  var tabs = document.getElementsByClassName('tab-btn');
+  for (var j = 0; j < tabs.length; j++) {
+    tabs[j].classList.remove('active');
+  }
+  var targetTab = document.getElementById('tab-' + tabId);
+  if (targetTab) {
+    targetTab.classList.add('active');
+  }
+
+  if (tabId === 'order') {
+    updateSummary();
+  }
+  if (tabId === 'nutr') {
+    animateNutrRings();
+  }
+}
+
+/* ===== Voucher Toggle ===== */
+function toggleVoucher() {
+  var el = document.getElementById('voucher');
+  if (el.classList.contains('open')) {
+    el.classList.remove('open');
+  } else {
+    el.classList.add('open');
+  }
+}
+
+/* ===== Render Menu ===== */
+function renderMenu() {
+  var container = document.getElementById('menuList');
+  var html = '';
+  for (var i = 0; i < menuData.length; i++) {
+    var item = menuData[i];
+    var selClass = '';
+    html += '<div class="menu-item">';
+    html += '<div class="fi">' + item.emoji + '</div>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div class="fn">' + item.name + '</div>';
+    html += '<div class="fm"><span>\u00A5' + item.price + '</span><span>' + item.cal + 'kcal</span></div>';
+    html += '</div>';
+    html += '<div class="fa">';
+    html += '<div class="size-btns">';
+    html += '<button class="sb';
+    if (item.size === 'small') { html += ' sel'; }
+    html += '" onclick="setSize(' + item.id + ',\'small\')">小份</button>';
+    html += '<button class="sb';
+    if (item.size === 'normal') { html += ' sel'; }
+    html += '" onclick="setSize(' + item.id + ',\'normal\')">正常份</button>';
+    html += '</div>';
+    html += '<div class="qc">';
+    html += '<button class="qb" onclick="changeQty(' + item.id + ',-1)">-</button>';
+    html += '<span class="qn" id="q' + item.id + '">' + item.qty + '</span>';
+    html += '<button class="qb" onclick="changeQty(' + item.id + ',1)">+</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+/* ===== Set Size ===== */
+function setSize(id, size) {
+  for (var i = 0; i < menuData.length; i++) {
+    if (menuData[i].id === id) {
+      menuData[i].size = size;
+      break;
+    }
+  }
+  renderMenu();
+  updateSummary();
+}
+
+/* ===== Change Quantity ===== */
+function changeQty(id, delta) {
+  for (var i = 0; i < menuData.length; i++) {
+    if (menuData[i].id === id) {
+      menuData[i].qty = Math.max(0, menuData[i].qty + delta);
+      var qtyEl = document.getElementById('q' + id);
+      if (qtyEl) {
+        qtyEl.textContent = menuData[i].qty;
+      }
+      break;
+    }
+  }
+  updateSummary();
+}
+
+/* ===== Update Summary ===== */
+function updateSummary() {
+  var totalPrice = 0;
+  var totalCal = 0;
+  var totalCount = 0;
+  for (var i = 0; i < menuData.length; i++) {
+    var item = menuData[i];
+    if (item.qty > 0) {
+      var mul = sizeMul[item.size];
+      totalPrice = totalPrice + Math.round(item.price * mul * item.qty * 100) / 100;
+      totalCal = totalCal + Math.round(item.cal * mul * item.qty);
+      totalCount = totalCount + item.qty;
+    }
+  }
+  document.getElementById('sumCount').textContent = totalCount + ' 道';
+  document.getElementById('sumCal').textContent = totalCal + ' kcal';
+  document.getElementById('sumPrice').textContent = '\u00A5' + totalPrice.toFixed(1);
+}
+
+/* ===== Recycle Slider ===== */
+function onSliderChange(val) {
+  currentSliderVal = parseInt(val);
+  var circle = document.getElementById('sliderCircle');
+  var pctEl = document.getElementById('sliderPct');
+  var labelEl = document.getElementById('sliderLabel');
+  var wasteEl = document.getElementById('wasteGram');
+  var coinEl = document.getElementById('coinChange');
+
+  var estTotal = 500;
+  var wasteGrams = Math.round(estTotal * (1 - currentSliderVal / 100));
+  var savedGrams = estTotal - wasteGrams;
+
+  pctEl.textContent = currentSliderVal + '%';
+
+  /* Update circle color class */
+  circle.className = 'slider-big';
+  if (currentSliderVal >= 80) {
+    circle.classList.add('green');
+    labelEl.textContent = '光盘达人';
+    pctEl.style.color = '#0D9B6A';
+  } else if (currentSliderVal >= 50) {
+    circle.classList.add('yellow');
+    labelEl.textContent = '还需努力';
+    pctEl.style.color = '#F59E0B';
+  } else {
+    circle.classList.add('red');
+    labelEl.textContent = '浪费较多';
+    pctEl.style.color = '#EF4444';
+  }
+
+  wasteEl.textContent = wasteGrams + 'g';
+  if (wasteGrams > 100) {
+    wasteEl.className = 'rv r';
+  } else if (wasteGrams > 50) {
+    wasteEl.className = 'rv y';
+  } else {
+    wasteEl.className = 'rv g';
+  }
+
+  var coinDiff = 0;
+  if (currentSliderVal >= 80) {
+    coinDiff = 50;
+  } else if (currentSliderVal >= 50) {
+    coinDiff = 10;
+  } else {
+    coinDiff = -20;
+  }
+  coinEl.textContent = (coinDiff >= 0 ? '+' : '') + coinDiff;
+  if (coinDiff >= 0) {
+    coinEl.className = 'rv g';
+  } else {
+    coinEl.className = 'rv r';
+  }
+
+  /* Update range thumb color */
+  var color = '#0D9B6A';
+  if (currentSliderVal < 50) { color = '#EF4444'; }
+  else if (currentSliderVal < 80) { color = '#F59E0B'; }
+
+  var styleEl = document.getElementById('dynSliderStyle');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'dynSliderStyle';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = '#cleanSlider::-webkit-slider-thumb{background:' + color + '}';
+}
+
+/* ===== Start Recycle ===== */
+function startRecycle() {
+  document.getElementById('recycleBtn').style.display = 'none';
+  document.getElementById('recycleAnim').classList.add('show');
+  setTimeout(function() {
+    document.getElementById('recycleAnim').classList.remove('show');
+    showRecycleResult();
+  }, 2500);
+}
+
+/* ===== Show Recycle Result ===== */
+function showRecycleResult() {
+  var estTotal = 500;
+  var bone = 35;
+  var soup = 20;
+  var napkin = 5;
+  var totalRemain = Math.round(estTotal * (1 - currentSliderVal / 100));
+  var edible = Math.max(0, totalRemain - bone - soup - napkin);
+  var rate = currentSliderVal;
+
+  document.getElementById('rTotal').textContent = totalRemain + 'g';
+  document.getElementById('rBone').textContent = bone + 'g（不计入）';
+  document.getElementById('rSoup').textContent = soup + 'g（不计入）';
+  document.getElementById('rNapkin').textContent = napkin + 'g（不计入）';
+  document.getElementById('rEdible').textContent = edible + 'g';
+  document.getElementById('rRate').textContent = rate + '%';
+
+  if (rate >= 80) {
+    document.getElementById('rRate').style.color = '#0D9B6A';
+  } else if (rate >= 50) {
+    document.getElementById('rRate').style.color = '#F59E0B';
+  } else {
+    document.getElementById('rRate').style.color = '#EF4444';
+  }
+
+  var coinDiff = 0;
+  var titleText = '';
+  var coinText = '';
+  var coinClass = '';
+  var detailText = '';
+  var rCardClass = '';
+
+  if (rate >= 80) {
+    coinDiff = 50;
+    titleText = '光盘达人！';
+    coinText = '+50 碳币';
+    coinClass = 'rc plus';
+    rCardClass = 'rcard good';
+    detailText = '餐盘剩余 ' + totalRemain + 'g（含不可食用 ' + (bone + soup + napkin) + 'g）<br>可食用浪费仅 ' + edible + 'g<br>碳减排 +' + Math.round((estTotal - totalRemain) * 0.37) + 'g CO\u2082<br>获得早餐券 1 张';
+  } else if (rate >= 50) {
+    coinDiff = 10;
+    titleText = '还不错，再努力一点';
+    coinText = '+10 碳币';
+    coinClass = 'rc plus';
+    rCardClass = 'rcard ok';
+    detailText = '餐盘剩余 ' + totalRemain + 'g（含不可食用 ' + (bone + soup + napkin) + 'g）<br>可食用浪费 ' + edible + 'g<br>碳减排 +' + Math.round((estTotal - totalRemain) * 0.3) + 'g CO\u2082<br>继续加油减少浪费吧';
+  } else {
+    coinDiff = -20;
+    titleText = '浪费较多，下次注意';
+    coinText = '-20 碳币';
+    coinClass = 'rc minus';
+    rCardClass = 'rcard bad';
+    detailText = '餐盘剩余 ' + totalRemain + 'g（含不可食用 ' + (bone + soup + napkin) + 'g）<br>可食用浪费 ' + edible + 'g<br>碳减排 ' + Math.round(-totalRemain * 0.2) + 'g CO\u2082<br>下次试试小份或少点一道菜';
+  }
+
+  document.getElementById('resultTitle').textContent = titleText;
+  var coinsEl = document.getElementById('resultCoins');
+  coinsEl.textContent = coinText;
+  coinsEl.className = coinClass;
+  document.getElementById('resultDetail').innerHTML = detailText;
+
+  var rCard = document.getElementById('resultRCard');
+  rCard.className = rCardClass;
+
+  document.getElementById('recycleResult').classList.add('show');
+
+  totalCoins = totalCoins + coinDiff;
+  updateCoinsDisplay();
+}
+
+/* ===== Reset Recycle ===== */
+function resetRecycle() {
+  document.getElementById('recycleResult').classList.remove('show');
+  document.getElementById('recycleBtn').style.display = 'flex';
+  switchTab('home');
+}
+
+/* ===== Update Coins Display ===== */
+function updateCoinsDisplay() {
+  var formatted = totalCoins.toLocaleString();
+  document.getElementById('navCoins').textContent = formatted;
+  document.getElementById('heroCoins').innerHTML = formatted + '<em>碳币</em>';
+}
+
+/* ===== Nutrition Ring Animation ===== */
+function animateNutrRings() {
+  /* Using CSS conic-gradient for ring effect */
+  var calPct = 1650 / 2000;
+  var proPct = 68 / 75;
+  var carbPct = 210 / 250;
+
+  var calEl = document.getElementById('nCalFg');
+  var proEl = document.getElementById('nProFg');
+  var carbEl = document.getElementById('nCarbFg');
+
+  /* Use conic-gradient to show progress */
+  calEl.style.background = 'conic-gradient(#F59E0B 0deg ' + (calPct * 360) + 'deg, transparent ' + (calPct * 360) + 'deg 360deg)';
+  calEl.style.border = 'none';
+  calEl.style.borderRadius = '50%';
+
+  proEl.style.background = 'conic-gradient(#EF4444 0deg ' + (proPct * 360) + 'deg, transparent ' + (proPct * 360) + 'deg 360deg)';
+  proEl.style.border = 'none';
+  proEl.style.borderRadius = '50%';
+
+  carbEl.style.background = 'conic-gradient(#F97316 0deg ' + (carbPct * 360) + 'deg, transparent ' + (carbPct * 360) + 'deg 360deg)';
+  carbEl.style.border = 'none';
+  carbEl.style.borderRadius = '50%';
+
+  /* Make foreground rings overlap background */
+  calEl.style.position = 'absolute';
+  calEl.style.top = '0';
+  calEl.style.left = '0';
+  calEl.style.width = '100%';
+  calEl.style.height = '100%';
+
+  proEl.style.position = 'absolute';
+  proEl.style.top = '0';
+  proEl.style.left = '0';
+  proEl.style.width = '100%';
+  proEl.style.height = '100%';
+
+  carbEl.style.position = 'absolute';
+  carbEl.style.top = '0';
+  carbEl.style.left = '0';
+  carbEl.style.width = '100%';
+  carbEl.style.height = '100%';
+
+  /* Update percentage text */
+  document.getElementById('nCalPct').textContent = (calPct * 100).toFixed(1) + '%';
+  document.getElementById('nProPct').textContent = (proPct * 100).toFixed(1) + '%';
+  document.getElementById('nCarbPct').textContent = (carbPct * 100).toFixed(1) + '%';
+}
+
+/* ===== Menu Item Click ===== */
+function menuClick(name) {
+  alert(name + ' - 功能开发中');
+}
+
+/* ===== Initialize ===== */
+function init() {
+  renderMenu();
+  onSliderChange(85);
+  updateCoinsDisplay();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

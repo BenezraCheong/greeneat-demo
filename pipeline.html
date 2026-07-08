@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>GreenEat 全链路闭环设计</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green:#0D9B6A;
+  --green-light:#34D399;
+  --green-lighter:#A7F3D0;
+  --green-bg:#F0FDF4;
+  --green-dark:#065F46;
+  --text:#1E293B;
+  --text-muted:#64748B;
+  --white:#FFFFFF;
+  --radius:14px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  background:#E8F5EE;
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== App Shell ===== */
+.app{
+  max-width:480px;
+  margin:0 auto;
+  min-height:100vh;
+  background:#F7FBF9;
+  box-shadow:0 0 40px rgba(0,0,0,.08);
+}
+
+/* ===== Header ===== */
+.header{
+  background:linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%);
+  padding:28px 20px 24px;
+  color:#fff;
+  position:relative;
+  overflow:hidden;
+}
+.header::after{
+  content:'';position:absolute;bottom:-40px;right:-30px;
+  width:140px;height:140px;
+  background:rgba(52,211,153,.12);border-radius:50%;
+}
+.header-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.back-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(255,255,255,.15);
+  color:#fff;text-decoration:none;
+  font-size:20px;font-weight:300;
+  transition:background .2s var(--ease);
+}
+.back-link:active{background:rgba(255,255,255,.28)}
+.header-badge{
+  font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;
+  background:rgba(255,255,255,.15);
+  color:rgba(255,255,255,.9);
+}
+.header h1{
+  font-size:22px;font-weight:800;
+  letter-spacing:-.02em;margin-bottom:6px;
+  position:relative;z-index:1;
+}
+.header p{
+  font-size:13px;opacity:.8;
+  position:relative;z-index:1;
+}
+
+/* ===== Timeline ===== */
+.timeline{
+  padding:24px 20px 32px;
+}
+.timeline-list{
+  position:relative;
+  padding-left:32px;
+}
+/* Vertical line */
+.timeline-list::before{
+  content:'';
+  position:absolute;
+  left:15px;top:20px;bottom:20px;
+  width:2px;
+  background:linear-gradient(to bottom,var(--green-lighter),var(--green-light),var(--green),var(--green-light),var(--green-lighter));
+  border-radius:2px;
+}
+
+/* ===== Node Card ===== */
+.node{
+  position:relative;
+  margin-bottom:8px;
+}
+.node:last-child{margin-bottom:0}
+
+/* Circle icon on the line */
+.node-dot{
+  position:absolute;
+  left:-32px;top:18px;
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+  background:var(--green);
+  box-shadow:0 0 0 4px #F7FBF9,0 2px 8px rgba(13,155,106,.3);
+  z-index:2;
+  flex-shrink:0;
+}
+
+/* Card */
+.node-card{
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:0 2px 12px rgba(13,155,106,.08);
+  overflow:hidden;
+  transition:box-shadow .3s var(--ease);
+}
+.node-card.active{
+  box-shadow:0 4px 20px rgba(13,155,106,.15);
+}
+
+/* Card header (always visible, clickable) */
+.node-head{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:16px;
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  transition:background .15s;
+}
+.node-head:active{background:rgba(13,155,106,.03)}
+
+.node-info{flex:1;min-width:0}
+.node-title-row{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:4px;
+}
+.node-name{
+  font-size:15px;font-weight:700;
+  color:var(--green-dark);
+}
+.node-status{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
+  background:#ECFDF5;color:var(--green);
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.node-desc{
+  font-size:12.5px;color:var(--text-muted);
+  line-height:1.6;
+}
+
+/* Chevron */
+.node-chevron{
+  flex-shrink:0;
+  width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  background:var(--green-bg);
+  margin-top:2px;
+  transition:transform .3s var(--ease),background .3s var(--ease);
+}
+.node-card.active .node-chevron{
+  transform:rotate(180deg);
+  background:#D1FAE5;
+}
+.node-chevron svg{
+  width:14px;height:14px;
+  stroke:var(--green);stroke-width:2.5;
+  fill:none;stroke-linecap:round;stroke-linejoin:round;
+}
+
+/* Card body (expandable) */
+.node-body{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s var(--ease);
+}
+.node-card.active .node-body{
+  max-height:800px;
+}
+.node-body-inner{
+  padding:0 16px 16px;
+  border-top:1px solid #E8F0EC;
+  padding-top:14px;
+}
+
+/* Detail sections */
+.detail-row{
+  margin-bottom:14px;
+}
+.detail-row:last-child{margin-bottom:0}
+.detail-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:.04em;
+  color:var(--text-muted);
+  margin-bottom:6px;
+  text-transform:uppercase;
+}
+.detail-text{
+  font-size:13px;color:var(--text);line-height:1.7;
+}
+
+/* Tech pills */
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{
+  font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:20px;
+  background:#ECFDF5;color:var(--green-dark);
+  border:1px solid #A7F3D0;
+}
+
+/* Info boxes */
+.info-box{
+  padding:12px 14px;border-radius:10px;
+}
+.info-box.green{
+  background:linear-gradient(135deg,#ECFDF5,#D1FAE5);
+  border:1.5px solid #A7F3D0;
+}
+.info-box.green .info-box-title{
+  font-size:11px;font-weight:700;color:var(--green);
+  margin-bottom:4px;
+}
+.info-box.green .info-box-text{
+  font-size:12.5px;color:var(--text);
+}
+.info-box.amber{
+  background:#FFFBEB;
+  border:1.5px solid #FDE68A;
+}
+.info-box.amber .info-box-title{
+  font-size:11px;font-weight:700;color:#B45309;
+  margin-bottom:4px;
+}
+.info-box.amber .info-box-text{
+  font-size:12.5px;color:var(--text);
+}
+.info-box.purple{
+  background:#F5F3FF;
+  border:1.5px solid #DDD6FE;
+}
+.info-box.purple .info-box-title{
+  font-size:11px;font-weight:700;color:#6D28D9;
+  margin-bottom:4px;
+}
+.info-box.purple .info-box-text{
+  font-size:12.5px;color:var(--text);
+}
+.info-box.highlight{
+  background:linear-gradient(135deg,#ECFDF5,#D1FAE5);
+  border:1.5px solid var(--green-light);
+  text-align:center;
+}
+.info-box.highlight .info-box-text{
+  font-size:14px;font-weight:700;color:var(--green-dark);
+  line-height:1.6;
+}
+
+/* Data flow */
+.flow-chain{
+  display:flex;align-items:center;flex-wrap:wrap;gap:4px;
+  font-size:12.5px;color:var(--text);
+}
+.flow-arrow{
+  color:var(--green-light);font-size:11px;
+}
+
+/* ===== Bottom Summary ===== */
+.summary{
+  margin:0 20px 24px;
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:0 2px 12px rgba(13,155,106,.08);
+  overflow:hidden;
+}
+.summary-quote{
+  padding:24px 20px 20px;
+  text-align:center;
+  border-bottom:1px solid #E8F0EC;
+}
+.summary-quote p{
+  font-size:16px;font-weight:700;
+  color:var(--green-dark);
+  line-height:1.6;
+  position:relative;
+  display:inline-block;
+}
+.summary-quote p::before,
+.summary-quote p::after{
+  font-size:36px;
+  color:var(--green-lighter);
+  position:absolute;
+  line-height:1;opacity:.6;
+}
+.summary-quote p::before{content:'\201C';left:-20px;top:-8px}
+.summary-quote p::after{content:'\201D';right:-20px;bottom:-16px}
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  padding:16px;
+  gap:12px;
+}
+.stat{
+  padding:16px 14px;
+  border-radius:12px;
+  background:var(--green-bg);
+  border:1px solid #D1FAE5;
+  text-align:center;
+  transition:transform .2s var(--ease);
+}
+.stat:active{transform:scale(.97)}
+.stat-num{
+  font-size:26px;font-weight:800;
+  color:var(--green);
+  margin-bottom:2px;
+  line-height:1.2;
+}
+.stat-num small{
+  font-size:12px;font-weight:600;
+}
+.stat-label{
+  font-size:11px;color:var(--text-muted);
+  font-weight:500;
+}
+
+/* ===== Footer ===== */
+.footer{
+  text-align:center;
+  padding:16px 20px 28px;
+  font-size:11px;
+  color:var(--text-muted);
+  opacity:.6;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <a href="index.html" class="back-link">&larr;</a>
+      <span class="header-badge">Pipeline v1.0</span>
+    </div>
+    <h1>全链路闭环设计</h1>
+    <p>从采购到回收的完整运作环路</p>
+  </header>
+
+  <!-- Timeline -->
+  <section class="timeline">
+    <div class="timeline-list">
+
+      <!-- Node 1 -->
+      <div class="node">
+        <div class="node-dot">&#129504;</div>
+        <div class="node-card" id="card1" onclick="toggle(1)">
+          <div class="node-head">
+            <div class="node-info">
+              <div class="node-title-row">
+                <span class="node-name">AI智能备餐助手</span>
+                <span class="node-status">已激活 &#10003;</span>
+              </div>
+              <div class="node-desc">将历史销量、天气、校历等数据输入AI模型，预测次日客流和菜品需求</div>
+            </div>
+            <div class="node-chevron">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="node-body">
+            <div class="node-body-inner">
+              <div class="detail-row">
+                <div class="detail-label">技术栈</div>
+                <div class="pills">
+                  <span class="pill">LightGBM</span>
+                  <span class="pill">LSTM 时序算法</span>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">输入数据</div>
+                <div class="detail-text">历史销量、天气预报、校历课表、活动安排、库存数据</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">输出结果</div>
+                <div class="info-box green">
+                  <div class="info-box-title">AI预测输出</div>
+                  <div class="info-box-text">次日客流预测 + 菜品需求量 + 采购建议清单</div>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-text">传统食堂凭经验拍板采购量，天气骤变、考试周人流变化难靠人力预判。AI模型通过融合多维数据，将备餐从"拍脑袋"升级为"看数据"，显著降低食材过剩浪费和供不应求。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 2 -->
+      <div class="node">
+        <div class="node-dot">&#127869;</div>
+        <div class="node-card" id="card2" onclick="toggle(2)">
+          <div class="node-head">
+            <div class="node-info">
+              <div class="node-title-row">
+                <span class="node-name">智慧取餐与芯片追踪</span>
+                <span class="node-status">已激活 &#10003;</span>
+              </div>
+              <div class="node-desc">RFID芯片餐盘，打菜时毫秒级写入菜品、重量、热量到云端</div>
+            </div>
+            <div class="node-chevron">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="node-body">
+            <div class="node-body-inner">
+              <div class="detail-row">
+                <div class="detail-label">技术栈</div>
+                <div class="pills">
+                  <span class="pill">RFID</span>
+                  <span class="pill">NFC</span>
+                  <span class="pill">人脸识别</span>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="info-box amber">
+                  <div class="info-box-title">关键特性</div>
+                  <div class="info-box-text">完全无感操作，取完餐瞬间自动记录——无需手动扫码或额外操作，毫秒级响应。</div>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">实时营养分析</div>
+                <div class="detail-text">就餐者可实时查看每餐的卡路里、蛋白质、膳食纤维等营养指标，帮助健康饮食决策。</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-text">传统方式依赖人工或简单刷卡，无法区分菜品种类和分量。RFID芯片餐盘在打菜区感应设备配合下，毫秒级写入菜品名称、重量、热量到云端，彻底解决精准记录难题。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 3 -->
+      <div class="node">
+        <div class="node-dot">&#128247;</div>
+        <div class="node-card" id="card3" onclick="toggle(3)">
+          <div class="node-head">
+            <div class="node-info">
+              <div class="node-title-row">
+                <span class="node-name">AI餐盘回收检测</span>
+                <span class="node-status">已激活 &#10003;</span>
+              </div>
+              <div class="node-desc">AI视觉摄像头+电子秤，语义分割识别食物残渣/骨头/不可食用物</div>
+            </div>
+            <div class="node-chevron">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="node-body">
+            <div class="node-body-inner">
+              <div class="detail-row">
+                <div class="detail-label">技术栈</div>
+                <div class="pills">
+                  <span class="pill">YOLO 目标检测</span>
+                  <span class="pill">语义分割</span>
+                  <span class="pill">多模态融合</span>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="info-box amber">
+                  <div class="info-box-title">公平性设计</div>
+                  <div class="info-box-text">只核算可食用浪费，不因倒掉骨头、辣椒或不可食用辅料而扣分，确保评分公平公正。</div>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">数据处理链路</div>
+                <div class="flow-chain">
+                  <span>浪费克数</span>
+                  <span class="flow-arrow">&rarr;</span>
+                  <span>光盘率</span>
+                  <span class="flow-arrow">&rarr;</span>
+                  <span>碳币增减</span>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-text">传统方式要么一刀切，要么完全依赖人工判断。AI视觉摄像头+高精度电子秤，语义分割算法精确识别食物残渣与不可食用物，实现公平准确的浪费评估。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 4 -->
+      <div class="node">
+        <div class="node-dot">&#128202;</div>
+        <div class="node-card" id="card4" onclick="toggle(4)">
+          <div class="node-head">
+            <div class="node-info">
+              <div class="node-title-row">
+                <span class="node-name">数据分析大脑与SAP对接</span>
+                <span class="node-status">已激活 &#10003;</span>
+              </div>
+              <div class="node-desc">浪费数据汇聚中央大脑，生成管理报告，写入SAP MRP模块</div>
+            </div>
+            <div class="node-chevron">
+              <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="node-body">
+            <div class="node-body-inner">
+              <div class="detail-row">
+                <div class="detail-label">技术栈</div>
+                <div class="pills">
+                  <span class="pill">SAP S/4HANA</span>
+                  <span class="pill">MRP 物料需求</span>
+                  <span class="pill">API 对接</span>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="info-box purple">
+                  <div class="info-box-title">闭环完成</div>
+                  <div class="info-box-text">红烧肉连续一周大量剩余 &rarr; 自动扣减猪肉采购订单，数据驱动精准采购。</div>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">核心理念</div>
+                <div class="info-box highlight">
+                  <div class="info-box-text">浪费越少 &rarr; 采购越精准 &rarr; 浪费越少</div>
+                </div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-text">分散在备餐、取餐、回收各环节的数据汇聚到中央大脑，生成可视化管理报告，并直接写入SAP MRP模块自动调整采购计划，实现真正的数据闭环。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Bottom Summary -->
+  <section class="summary">
+    <div class="summary-quote">
+      <p>让每一次用餐选择，都在推动更可持续的未来</p>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">&uarr;22%</div>
+        <div class="stat-label">采购精准度</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">&uarr;35%</div>
+        <div class="stat-label">光盘率</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">&darr;40%</div>
+        <div class="stat-label">厨余减少</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">4,860<small>kg</small></div>
+        <div class="stat-label">碳减排 / 月</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">GreenEat AI &copy; 2025</div>
+
+</div>
+
+<script>
+function toggle(n) {
+  var card = document.getElementById('card' + n);
+  var wasActive = card.classList.contains('active');
+  // Close all
+  var all = document.querySelectorAll('.node-card');
+  for (var i = 0; i < all.length; i++) {
+    all[i].classList.remove('active');
+  }
+  // Toggle target
+  if (!wasActive) {
+    card.classList.add('active');
+  }
+}
+</script>
+
+</body>
+</html>

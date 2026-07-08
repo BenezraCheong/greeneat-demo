@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GreenEat - AI可持续发展食堂全链路反浪费系统</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #F0FDF4; color: #1F2937;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== Hero ===== */
+.hero {
+  background: linear-gradient(160deg, #0D9B6A 0%, #065F46 100%);
+  padding: 32px 20px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.12);
+}
+.hero-brand {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.hero-brand .eat { color: #34D399; }
+.hero-subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.92);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.hero-slogan {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 400;
+}
+
+/* ===== Role Cards ===== */
+.cards { padding: 16px 16px 12px; }
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card:active { transform: scale(0.98); }
+
+.card-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: #D1FAE5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.card-body { flex: 1; min-width: 0; }
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 2px;
+}
+.card-desc {
+  font-size: 12px;
+  color: #9CA3AF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-arrow {
+  flex-shrink: 0;
+  color: #D1D5DB;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  padding: 12px 16px 24px;
+}
+.footer p {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-brand">Green<span class="eat">Eat</span></div>
+  <div class="hero-subtitle">AI可持续发展食堂全链路反浪费系统</div>
+  <div class="hero-slogan">让光盘行动，从个人自觉，走向公共决策</div>
+</div>
+
+<!-- Role Cards -->
+<div class="cards">
+
+  <a class="card" href="student.html">
+    <div class="card-icon">🍽️</div>
+    <div class="card-body">
+      <div class="card-title">就餐端</div>
+      <div class="card-desc">学生/员工智能选餐与光盘反馈</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card" href="admin.html">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-title">AI管理后台</div>
+      <div class="card-desc">实时数据看板与AI备餐推演</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card" href="supply.html">
+    <div class="card-icon">🔗</div>
+    <div class="card-body">
+      <div class="card-title">供应链对接</div>
+      <div class="card-desc">SAP ERP联动与绿色分类账</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card" href="pipeline.html">
+    <div class="card-icon">🔄</div>
+    <div class="card-body">
+      <div class="card-title">全链路闭环</div>
+      <div class="card-desc">预测→取餐→识别→反馈→采购调整</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card" href="screen.html">
+    <div class="card-icon">📺</div>
+    <div class="card-body">
+      <div class="card-title">公共大屏</div>
+      <div class="card-desc">光盘率公示与班级排行榜</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>团队：吴海婷、杨欣雨、陈嘉怡、谢培舒、高瑄瑜、赵爽</p>
+  <p>技术支持：CtrlX</p>
+</div>
+
+</body>
+</html>

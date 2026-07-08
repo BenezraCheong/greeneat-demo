@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>GreenEat - 反浪费成果看板</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+  background:#0A1628;
+  color:#E2E8F0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+}
+.container{
+  width:100%;
+  max-width:480px;
+  margin:0 auto;
+  padding:0 0 80px 0;
+  background:#0A1628;
+}
+
+/* ===== HEADER ===== */
+.header{
+  background:linear-gradient(135deg,#064E3B 0%,#0F766E 50%,#065F46 100%);
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.header-left{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-svg{width:28px;height:28px;flex-shrink:0}
+.brand-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap}
+.header-title{
+  font-size:13px;
+  font-weight:600;
+  color:#A7F3D0;
+  text-align:center;
+  flex:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#34D399;
+  box-shadow:0 0 6px #34D399;
+  animation:pulse-dot 2s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 6px #34D399}50%{opacity:.5;box-shadow:0 0 14px #34D399}}
+.clock{font-size:12px;color:#D1FAE5;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ===== SECTION COMMON ===== */
+.section{padding:12px 14px}
+.section-title{
+  font-size:14px;
+  font-weight:700;
+  color:#E2E8F0;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.section-title .icon{font-size:15px;flex-shrink:0}
+
+/* ===== CORE DATA CARDS ===== */
+.core-cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  padding:12px 14px;
+}
+.core-card{
+  background:#111827;
+  border:1px solid rgba(52,211,153,0.12);
+  border-radius:12px;
+  padding:12px 10px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.core-card::after{
+  content:'';
+  position:absolute;
+  top:-20px;right:-20px;
+  width:60px;height:60px;
+  border-radius:50%;
+  filter:blur(30px);
+  opacity:.1;
+  pointer-events:none;
+}
+.core-card:nth-child(1)::after{background:#34D399}
+.core-card:nth-child(2)::after{background:#60A5FA}
+.core-card:nth-child(3)::after{background:#F59E0B}
+.core-card .label{font-size:11px;color:#94A3B8;margin-bottom:6px;line-height:1.3}
+.core-card .value{
+  font-size:26px;
+  font-weight:800;
+  line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.core-card:nth-child(1) .value{color:#34D399}
+.core-card:nth-child(2) .value{color:#60A5FA}
+.core-card:nth-child(3) .value{color:#F59E0B}
+.core-card .unit{font-size:12px;color:#64748B;margin-top:2px}
+
+/* ===== RANKING ===== */
+.rank-list{display:flex;flex-direction:column;gap:6px}
+.rank-item{
+  display:flex;
+  align-items:center;
+  padding:8px 10px;
+  background:#111827;
+  border:1px solid rgba(255,255,255,0.04);
+  border-radius:10px;
+  gap:8px;
+}
+.rank-item.top3{border-color:rgba(52,211,153,0.15)}
+.rank-badge{
+  width:24px;height:24px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+  flex-shrink:0;
+}
+.rank-badge.gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a1a1a}
+.rank-badge.silver{background:linear-gradient(135deg,#C0C0C0,#A0A0A0);color:#1a1a1a}
+.rank-badge.bronze{background:linear-gradient(135deg,#CD7F32,#B8860B);color:#fff}
+.rank-badge.normal{background:#1E293B;color:#64748B}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:13px;color:#CBD5E1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-stats{display:flex;gap:10px;margin-top:2px;font-size:11px}
+.rank-rate{color:#34D399;font-weight:600}
+.rank-coin{color:#F59E0B;font-weight:600}
+.rank-medal{font-size:14px;flex-shrink:0;width:20px;text-align:center}
+
+/* ===== WASTE DISTRIBUTION ===== */
+.waste-bars{display:flex;flex-direction:column;gap:10px}
+.waste-row{display:flex;align-items:center;gap:8px}
+.waste-label{font-size:12px;color:#94A3B8;width:36px;flex-shrink:0;text-align:right}
+.waste-track{
+  flex:1;height:22px;
+  background:#1E293B;
+  border-radius:6px;
+  overflow:hidden;
+  position:relative;
+}
+.waste-fill{
+  height:100%;
+  border-radius:6px;
+  animation:bar-grow 1.5s ease-out forwards;
+  transform-origin:left;
+  transform:scaleX(0);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding-right:6px;
+  font-size:10px;
+  font-weight:700;
+  color:#0A1628;
+}
+@keyframes bar-grow{to{transform:scaleX(1)}}
+.waste-fill.rice{background:#E2E8F0}
+.waste-fill.veg{background:#34D399}
+.waste-fill.meat{background:#EF4444}
+.waste-fill.soup{background:#F59E0B}
+.waste-fill.other{background:#64748B}
+
+/* ===== AI PROCUREMENT ===== */
+.proc-grid{display:flex;flex-direction:column;gap:8px}
+.proc-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#111827;
+  border:1px solid rgba(255,255,255,0.04);
+  border-radius:10px;
+  padding:10px 12px;
+}
+.proc-left{display:flex;flex-direction:column;gap:2px}
+.proc-name{font-size:13px;font-weight:600;color:#E2E8F0}
+.proc-change{font-size:12px;color:#94A3B8}
+.proc-change .down{color:#EF4444;font-weight:700}
+.proc-right{text-align:right}
+.proc-save{font-size:13px;font-weight:700;color:#34D399}
+.proc-emoji{font-size:14px;margin-right:6px;flex-shrink:0}
+.proc-summary{
+  background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(16,185,129,0.04));
+  border:1px solid rgba(52,211,153,0.2);
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  align-items:center;
+  font-size:13px;
+  color:#94A3B8;
+}
+.proc-summary .val{color:#34D399;font-weight:800;font-size:18px}
+.proc-summary .sync{color:#64748B;font-size:11px;width:100%}
+
+/* ===== TREND CHART ===== */
+.trend-chart{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  height:140px;
+  gap:6px;
+  padding:0 4px;
+  position:relative;
+}
+.trend-chart::before{
+  content:'85%目标';
+  position:absolute;
+  left:0;right:0;
+  bottom:calc(85% - 0%);/* mapped below via JS or hardcoded */
+  border-top:2px dashed rgba(239,68,68,0.5);
+  font-size:9px;
+  color:#EF4444;
+  padding-right:4px;
+  text-align:right;
+  pointer-events:none;
+  z-index:2;
+}
+.trend-col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.trend-val{font-size:10px;font-weight:600;color:#6EE7B7}
+.trend-bar-wrap{
+  width:100%;
+  height:100px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+.trend-bar{
+  width:70%;
+  max-width:36px;
+  min-height:4px;
+  border-radius:6px 6px 2px 2px;
+  animation:bar-rise 1.2s ease-out forwards;
+  transform-origin:bottom;
+  transform:scaleY(0);
+}
+@keyframes bar-rise{to{transform:scaleY(1)}}
+.trend-bar.below{background:linear-gradient(to top,#0F766E,#34D399)}
+.trend-bar.above{background:linear-gradient(to top,#059669,#6EE7B7);box-shadow:0 0 12px rgba(52,211,153,0.3)}
+.trend-bar.target{background:linear-gradient(to top,#059669,#6EE7B9);box-shadow:0 0 16px rgba(52,211,153,0.5)}
+.trend-day{font-size:10px;color:#64748B}
+
+/* Target line overlay - using percentage based on chart height */
+.target-line-container{
+  position:relative;
+  margin-top:-104px;
+  margin-bottom:104px;
+  pointer-events:none;
+  z-index:3;
+}
+
+/* ===== MARQUEE FOOTER ===== */
+.marquee-wrap{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:36px;
+  background:linear-gradient(90deg,#064E3B,#0F766E,#064E3B);
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  z-index:100;
+}
+.marquee-wrap::before,.marquee-wrap::after{
+  content:'';position:absolute;top:0;width:40px;height:100%;z-index:2;
+}
+.marquee-wrap::before{left:0;background:linear-gradient(90deg,#064E3B,transparent)}
+.marquee-wrap::after{right:0;background:linear-gradient(270deg,#064E3B,transparent)}
+.marquee-track{
+  display:flex;
+  white-space:nowrap;
+  animation:scroll-left 35s linear infinite;
+}
+.marquee-track span{
+  font-size:12px;
+  color:#D1FAE5;
+  padding:0 40px;
+}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ===== BACK LINK ===== */
+.back-link{
+  position:fixed;
+  bottom:42px;
+  left:12px;
+  font-size:11px;
+  color:#475569;
+  text-decoration:none;
+  z-index:101;
+  transition:color .3s;
+}
+.back-link:active{color:#34D399}
+
+/* ===== PC ADAPTER ===== */
+@media(min-width:600px){
+  body{background:#060E1A}
+  .container{
+    border:1px solid rgba(52,211,153,0.1);
+    border-radius:20px;
+    margin-top:16px;
+    margin-bottom:16px;
+    box-shadow:0 0 60px rgba(52,211,153,0.06);
+    overflow:hidden;
+  }
+  .core-card .value{font-size:30px}
+}
+@media(min-width:481px) and (max-width:599px){
+  .container{max-width:480px}
+}
+
+/* ===== CARD SHARED ===== */
+.card{
+  background:#111827;
+  border:1px solid rgba(52,211,153,0.1);
+  border-radius:12px;
+  padding:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#34D399" stroke-width="2.5"/><path d="M20 8 C20 8,10 18,14 26 C16 30,24 30,26 26 C30 18,20 8,20 8Z" fill="#34D399" opacity=".9"/></svg>
+      <span class="brand-name">GreenEat</span>
+    </div>
+    <div class="header-title">反浪费成果看板</div>
+    <div class="header-right">
+      <span class="status-dot"></span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <!-- ===== CORE DATA CARDS ===== -->
+  <div class="core-cards">
+    <div class="core-card">
+      <div class="label">今日光盘率</div>
+      <div class="value"><span id="v-rate">0</span>%</div>
+      <div class="unit">目标 90%</div>
+    </div>
+    <div class="core-card">
+      <div class="label">今日减浪费</div>
+      <div class="value"><span id="v-today">0</span></div>
+      <div class="unit">kg</div>
+    </div>
+    <div class="core-card">
+      <div class="label">本月累计</div>
+      <div class="value"><span id="v-month">0</span></div>
+      <div class="unit">kg</div>
+    </div>
+  </div>
+
+  <!-- ===== RANKING ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">&#127942;</span> 光盘排行榜 Top 10</div>
+    <div class="rank-list">
+      <div class="rank-item top3">
+        <span class="rank-badge gold">1</span>
+        <span class="rank-medal">&#129351;</span>
+        <div class="rank-info">
+          <div class="rank-name">计算机科学2301班</div>
+          <div class="rank-stats"><span class="rank-rate">96%</span><span class="rank-coin">12,450 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item top3">
+        <span class="rank-badge silver">2</span>
+        <span class="rank-medal">&#129352;</span>
+        <div class="rank-info">
+          <div class="rank-name">法学院2302班</div>
+          <div class="rank-stats"><span class="rank-rate">94%</span><span class="rank-coin">11,890 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item top3">
+        <span class="rank-badge bronze">3</span>
+        <span class="rank-medal">&#129353;</span>
+        <div class="rank-info">
+          <div class="rank-name">外语学院英语2301班</div>
+          <div class="rank-stats"><span class="rank-rate">92%</span><span class="rank-coin">11,200 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">4</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">机械工程2301班</div>
+          <div class="rank-stats"><span class="rank-rate">89%</span><span class="rank-coin">10,650 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">5</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">数学与应用数学2301班</div>
+          <div class="rank-stats"><span class="rank-rate">87%</span><span class="rank-coin">10,200 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">6</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">电子信息2302班</div>
+          <div class="rank-stats"><span class="rank-rate">85%</span><span class="rank-coin">9,800 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">7</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">化学工程2301班</div>
+          <div class="rank-stats"><span class="rank-rate">83%</span><span class="rank-coin">9,350 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">8</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">经济管理2301班</div>
+          <div class="rank-stats"><span class="rank-rate">81%</span><span class="rank-coin">8,900 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">9</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">物理学2301班</div>
+          <div class="rank-stats"><span class="rank-rate">78%</span><span class="rank-coin">8,400 碳币</span></div>
+        </div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-badge normal">10</span>
+        <span class="rank-medal"></span>
+        <div class="rank-info">
+          <div class="rank-name">历史学2301班</div>
+          <div class="rank-stats"><span class="rank-rate">75%</span><span class="rank-coin">7,800 碳币</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WASTE DISTRIBUTION ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">&#9851;</span> 浪费类型分布</div>
+    <div class="card">
+      <div class="waste-bars">
+        <div class="waste-row">
+          <span class="waste-label">米饭</span>
+          <div class="waste-track"><div class="waste-fill rice" style="width:35%">35%</div></div>
+        </div>
+        <div class="waste-row">
+          <span class="waste-label">蔬菜</span>
+          <div class="waste-track"><div class="waste-fill veg" style="width:25%;animation-delay:.15s">25%</div></div>
+        </div>
+        <div class="waste-row">
+          <span class="waste-label">肉类</span>
+          <div class="waste-track"><div class="waste-fill meat" style="width:20%;animation-delay:.3s">20%</div></div>
+        </div>
+        <div class="waste-row">
+          <span class="waste-label">汤品</span>
+          <div class="waste-track"><div class="waste-fill soup" style="width:12%;animation-delay:.45s">12%</div></div>
+        </div>
+        <div class="waste-row">
+          <span class="waste-label">其他</span>
+          <div class="waste-track"><div class="waste-fill other" style="width:8%;animation-delay:.6s">8%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AI PROCUREMENT ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">&#129302;</span> AI采购调整</div>
+    <div class="proc-grid">
+      <div class="proc-item">
+        <div style="display:flex;align-items:center">
+          <span class="proc-emoji">&#129385;</span>
+          <div class="proc-left">
+            <div class="proc-name">猪五花肉</div>
+            <div class="proc-change">400kg <span class="down">&#8595;30%</span> 280kg</div>
+          </div>
+        </div>
+        <div class="proc-right"><div class="proc-save">省 &#165;960</div></div>
+      </div>
+      <div class="proc-item">
+        <div style="display:flex;align-items:center">
+          <span class="proc-emoji">&#129382;</span>
+          <div class="proc-left">
+            <div class="proc-name">西兰花</div>
+            <div class="proc-change">500kg <span class="down">&#8595;20%</span> 400kg</div>
+          </div>
+        </div>
+        <div class="proc-right"><div class="proc-save">省 &#165;80</div></div>
+      </div>
+      <div class="proc-item">
+        <div style="display:flex;align-items:center">
+          <span class="proc-emoji">&#127834;</span>
+          <div class="proc-left">
+            <div class="proc-name">大米</div>
+            <div class="proc-change">800kg <span class="down">&#8595;20%</span> 640kg</div>
+          </div>
+        </div>
+        <div class="proc-right"><div class="proc-save">省 &#165;320</div></div>
+      </div>
+      <div class="proc-summary">
+        <span>调整 <span class="val">8</span> 项</span>
+        <span>节省 <span class="val">&#165;1,595</span></span>
+        <span class="sync">&#10003; 已同步 SAP</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WEEKLY TREND ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">&#128200;</span> 本周趋势</div>
+    <div class="card" style="position:relative">
+      <!-- 85% target line -->
+      <div style="
+        position:absolute;
+        left:8px;right:8px;
+        bottom:85px;
+        border-top:2px dashed rgba(239,68,68,0.45);
+        z-index:2;
+        pointer-events:none;
+      "></div>
+      <div style="
+        position:absolute;
+        right:8px;
+        bottom:82px;
+        font-size:9px;
+        color:#EF4444;
+        opacity:.7;
+        z-index:2;
+        pointer-events:none;
+      ">85%目标</div>
+      <div class="trend-chart">
+        <!-- 周一 78% -->
+        <div class="trend-col">
+          <div class="trend-val">78%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar below" style="height:78px;animation-delay:.1s"></div></div>
+          <div class="trend-day">周一</div>
+        </div>
+        <!-- 周二 82% -->
+        <div class="trend-col">
+          <div class="trend-val">82%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar below" style="height:82px;animation-delay:.2s"></div></div>
+          <div class="trend-day">周二</div>
+        </div>
+        <!-- 周三 80% -->
+        <div class="trend-col">
+          <div class="trend-val">80%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar below" style="height:80px;animation-delay:.3s"></div></div>
+          <div class="trend-day">周三</div>
+        </div>
+        <!-- 周四 85% (target) -->
+        <div class="trend-col">
+          <div class="trend-val">85%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar target" style="height:85px;animation-delay:.4s"></div></div>
+          <div class="trend-day">周四</div>
+        </div>
+        <!-- 周五 87% -->
+        <div class="trend-col">
+          <div class="trend-val">87%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar above" style="height:87px;animation-delay:.5s"></div></div>
+          <div class="trend-day">周五</div>
+        </div>
+        <!-- 周六 90% -->
+        <div class="trend-col">
+          <div class="trend-val">90%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar above" style="height:90px;animation-delay:.6s"></div></div>
+          <div class="trend-day">周六</div>
+        </div>
+        <!-- 周日 88% -->
+        <div class="trend-col">
+          <div class="trend-val">88%</div>
+          <div class="trend-bar-wrap"><div class="trend-bar above" style="height:88px;animation-delay:.7s"></div></div>
+          <div class="trend-day">周日</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== MARQUEE FOOTER ===== -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span>&#128226; 因昨日光盘率提升至87%，今日原材料采购已自动削减156kg，预计节约经费 &#165;2,480元 &mdash; GreenEat AI &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span>&#127793; 本周光盘率持续上升，全校师生共同努力减少食物浪费，累计减排CO&#8322; 4.2吨 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span>&#127942; 计算机科学2301班连续3天蝉联光盘排行榜冠军！ &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span>&#128226; 因昨日光盘率提升至87%，今日原材料采购已自动削减156kg，预计节约经费 &#165;2,480元 &mdash; GreenEat AI &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span>&#127793; 本周光盘率持续上升，全校师生共同努力减少食物浪费，累计减排CO&#8322; 4.2吨 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span>&#127942; 计算机科学2301班连续3天蝉联光盘排行榜冠军！ &nbsp;&nbsp;&nbsp;&nbsp;</span>
+  </div>
+</div>
+
+<!-- Back Link -->
+<a href="index.html" class="back-link">&#8592;</a>
+
+<script>
+(function(){
+  /* ===== CLOCK ===== */
+  var clockEl = document.getElementById('clock');
+  function updateClock(){
+    var now = new Date();
+    var h = String(now.getHours()).padStart(2,'0');
+    var m = String(now.getMinutes()).padStart(2,'0');
+    var s = String(now.getSeconds()).padStart(2,'0');
+    clockEl.textContent = h + ':' + m + ':' + s;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ===== COUNTING ANIMATION ===== */
+  function countUp(el, target, duration, decimal){
+    var startTime = performance.now();
+    function tick(now){
+      var elapsed = now - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      /* easeOutCubic */
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = target * eased;
+      if(decimal > 0){
+        el.textContent = current.toFixed(decimal);
+      } else {
+        el.textContent = Math.round(current).toLocaleString();
+      }
+      if(progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ===== INIT ===== */
+  setTimeout(function(){
+    countUp(document.getElementById('v-rate'), 85, 2000, 0);
+    countUp(document.getElementById('v-today'), 128.6, 2000, 1);
+    countUp(document.getElementById('v-month'), 3642, 2000, 0);
+  }, 300);
+
+  /* ===== SUBTLE FLUCTUATION ===== */
+  var todayBase = 128.6;
+  setInterval(function(){
+    var delta = (Math.random() - 0.4) * 0.4;
+    document.getElementById('v-today').textContent = (todayBase + delta).toFixed(1);
+  }, 5000);
+})();
+</script>
+
+</body>
+</html>
